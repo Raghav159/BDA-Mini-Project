@@ -1,0 +1,50 @@
+# Datasets (Raw data files must not be committed to GitHub)
+datasets/
+*.csv
+*.gz
+*.zip
+*.tar.gz
+
+# Environment & Local secrets (.env contains local secrets/paths)
+.env
+.env.local
+.env.*.local
+
+# Runtime State & Cache
+state/*
+!state/.gitkeep
+!state/README.md
+
+# Python Artifacts & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
+
+# Node / Frontend Artifacts
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# IDE & OS Artifacts
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs & Container/Hadoop local data
+*.log
+hadoop-data/
+kafka-data/
