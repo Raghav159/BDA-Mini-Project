@@ -1350,13 +1350,13 @@ The implementing model (Gemini 3.6 Flash Medium) should verify each of these bef
 - [x] **Configuration:** All env vars read from `config/settings.py`, never hard-coded
 - [x] **MapReduce:** Python mapper + reducer via Hadoop Streaming. Tested locally first with Unix pipes.
 - [x] **HDFS operations:** Via `docker exec bda-hadoop hdfs dfs ...`
-- [ ] **Kafka messages:** JSON, key=product_id string, value=JSON object
+- [x] **Kafka messages:** JSON, key=product_id string, value=JSON object
 - [x] **Window size:** Configurable. Dev=60s, Demo=600s.
 - [ ] **Ranking output:** JSON file read by FastAPI. Not a database.
 - [ ] **State management:** Local JSON files in `state/` directory.
 - [ ] **Frontend:** React + Vite. Polls `GET /api/rankings` every 5 seconds.
-- [ ] **Burst mode:** Signal file mechanism. Producer watches `state/burst_signal.json`.
-- [ ] **Honesty:** All Kafka messages include `"source": "historical_simulation"`.
-- [ ] **No Java app code:** All custom code is Python (backend) or JavaScript (frontend).
+- [x] **Burst mode:** Signal file mechanism. Producer watches `state/burst_signal.json`.
+- [x] **Honesty:** All Kafka messages include `"source": "historical_simulation"`.
+- [x] **No Java app code:** All custom code is Python (backend) or JavaScript (frontend).
 - [x] **Test first:** MapReduce mapper/reducer tested with Unix pipes before running on Hadoop.
 - [ ] **Stage order:** Follow the 12-stage roadmap sequentially. Do not skip stages.
