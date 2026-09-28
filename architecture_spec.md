@@ -1349,7 +1349,7 @@ The implementing model (Gemini 3.6 Flash Medium) should verify each of these bef
 - [x] **Node.js:** Available for React frontend
 - [x] **Configuration:** All env vars read from `config/settings.py`, never hard-coded
 - [x] **MapReduce:** Python mapper + reducer via Hadoop Streaming. Tested locally first with Unix pipes.
-- [ ] **HDFS operations:** Via `docker exec bda-hadoop hdfs dfs ...`
+- [x] **HDFS operations:** Via `docker exec bda-hadoop hdfs dfs ...`
 - [ ] **Kafka messages:** JSON, key=product_id string, value=JSON object
 - [x] **Window size:** Configurable. Dev=60s, Demo=600s.
 - [ ] **Ranking output:** JSON file read by FastAPI. Not a database.
