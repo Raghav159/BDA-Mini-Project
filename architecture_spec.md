@@ -41,125 +41,132 @@
 **File:** `datasets/Amazon/Amazon Sale Report.csv`  
 **Size:** ~40 MB (124,654 rows after skipping malformed lines)
 
-| Property | Finding |
-|---|---|
-| **Columns (21)** | `index`, `Order ID`, `Date`, `Status`, `Fulfilment`, `Sales Channel`, `ship-service-level`, `Category`, `Size`, `Courier Status`, `Qty`, `currency`, `Amount`, `ship-city`, `ship-state`, `ship-postal-code`, `ship-country`, `B2B`, `fulfilled-by`, `New`, `PendingS` |
-| **Row count** | 124,654 |
-| **Unique Order IDs** | 116,278 |
-| **Duplicate Order IDs** | 8,376 (multi-item orders: 6,690 orders have >1 line item) |
-| **Product identifier** | **NONE.** No product_id, SKU, or ASIN. The finest granularity is `Category` + `Size`. |
-| **Unique categories** | **9**: T-shirt (48,655), Shirt (48,152), Blazzer (14,987), Trousers (10,255), Perfume (1,123), Wallet (895), Socks (425), Shoes (159), Watch (3) |
-| **Category+Size combos** | **45** — this is the maximum "product" count possible |
-| **Qty field** | Integer. Distribution: 0 (12,384), 1 (111,891), 2 (332), 3 (32), 4+ (14). Overwhelmingly Qty=1. |
-| **Qty=0 meaning** | Strongly correlated with `Cancelled` status. 12,281 of 12,384 Qty=0 rows are Cancelled. |
-| **Valid transactions** | 106,825 rows with Qty>0 and Status ≠ Cancelled |
-| **Date field** | Date only, no time-of-day. Format: `MM-DD-YY` or `MM-DD-YYYY` (inconsistent). Range: 2022-03-31 to 2022-06-29 (91 unique dates, ~3 months). |
-| **Time-of-day** | **Not available.** No hour/minute/second information. |
-| **Null/empty columns** | `currency`/`Amount`: 6.1% null; `fulfilled-by`: 69.6% null; `New`/`PendingS`: 100% empty (garbage columns). |
-| **Malformed rows** | Parser error at line 124 (22 fields instead of 21). Pandas `on_bad_lines='skip'` required. |
-| **Order statuses** | 13 statuses including Cancelled (17,726), Shipped (75,213), Delivered (27,764), etc. |
+| Property                 | Finding                                                                                                                                                                                                                                                                |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Columns (21)**         | `index`, `Order ID`, `Date`, `Status`, `Fulfilment`, `Sales Channel`, `ship-service-level`, `Category`, `Size`, `Courier Status`, `Qty`, `currency`, `Amount`, `ship-city`, `ship-state`, `ship-postal-code`, `ship-country`, `B2B`, `fulfilled-by`, `New`, `PendingS` |
+| **Row count**            | 124,654                                                                                                                                                                                                                                                                |
+| **Unique Order IDs**     | 116,278                                                                                                                                                                                                                                                                |
+| **Duplicate Order IDs**  | 8,376 (multi-item orders: 6,690 orders have >1 line item)                                                                                                                                                                                                              |
+| **Product identifier**   | **NONE.** No product_id, SKU, or ASIN. The finest granularity is `Category` + `Size`.                                                                                                                                                                                  |
+| **Unique categories**    | **9**: T-shirt (48,655), Shirt (48,152), Blazzer (14,987), Trousers (10,255), Perfume (1,123), Wallet (895), Socks (425), Shoes (159), Watch (3)                                                                                                                       |
+| **Category+Size combos** | **45** — this is the maximum "product" count possible                                                                                                                                                                                                                  |
+| **Qty field**            | Integer. Distribution: 0 (12,384), 1 (111,891), 2 (332), 3 (32), 4+ (14). Overwhelmingly Qty=1.                                                                                                                                                                        |
+| **Qty=0 meaning**        | Strongly correlated with `Cancelled` status. 12,281 of 12,384 Qty=0 rows are Cancelled.                                                                                                                                                                                |
+| **Valid transactions**   | 106,825 rows with Qty>0 and Status ≠ Cancelled                                                                                                                                                                                                                         |
+| **Date field**           | Date only, no time-of-day. Format: `MM-DD-YY` or `MM-DD-YYYY` (inconsistent). Range: 2022-03-31 to 2022-06-29 (91 unique dates, ~3 months).                                                                                                                            |
+| **Time-of-day**          | **Not available.** No hour/minute/second information.                                                                                                                                                                                                                  |
+| **Null/empty columns**   | `currency`/`Amount`: 6.1% null; `fulfilled-by`: 69.6% null; `New`/`PendingS`: 100% empty (garbage columns).                                                                                                                                                            |
+| **Malformed rows**       | Parser error at line 124 (22 fields instead of 21). Pandas `on_bad_lines='skip'` required.                                                                                                                                                                             |
+| **Order statuses**       | 13 statuses including Cancelled (17,726), Shipped (75,213), Delivered (27,764), etc.                                                                                                                                                                                   |
 
 ### 1.2 Instacart Dataset
 
 **Files:** 6 CSVs in `datasets/instacart/`
 
 #### orders.csv
-| Property | Finding |
-|---|---|
-| **Size** | ~109 MB (3,421,083 rows) |
-| **Columns** | `order_id`, `user_id`, `eval_set`, `order_number`, `order_dow`, `order_hour_of_day`, `days_since_prior_order` |
-| **Unique orders** | 3,421,083 |
-| **Unique users** | 206,209 |
-| **eval_set split** | prior: 3,214,874 / train: 131,209 / test: 75,000 |
-| **order_dow** | 0-6 (day of week). Peak: days 0,1. |
-| **order_hour_of_day** | **0-23 (hour of day).** Peak: 10am-4pm. This is genuine intraday time information. |
-| **days_since_prior_order** | Float. 6.0% null (first orders). Mean=10.7, range 0-30. |
-| **Nulls** | Only `days_since_prior_order`: 206,209 (6.0%) — expected, first orders have no prior. |
+
+| Property                   | Finding                                                                                                       |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **Size**                   | ~109 MB (3,421,083 rows)                                                                                      |
+| **Columns**                | `order_id`, `user_id`, `eval_set`, `order_number`, `order_dow`, `order_hour_of_day`, `days_since_prior_order` |
+| **Unique orders**          | 3,421,083                                                                                                     |
+| **Unique users**           | 206,209                                                                                                       |
+| **eval_set split**         | prior: 3,214,874 / train: 131,209 / test: 75,000                                                              |
+| **order_dow**              | 0-6 (day of week). Peak: days 0,1.                                                                            |
+| **order_hour_of_day**      | **0-23 (hour of day).** Peak: 10am-4pm. This is genuine intraday time information.                            |
+| **days_since_prior_order** | Float. 6.0% null (first orders). Mean=10.7, range 0-30.                                                       |
+| **Nulls**                  | Only `days_since_prior_order`: 206,209 (6.0%) — expected, first orders have no prior.                         |
 
 #### products.csv
-| Property | Finding |
-|---|---|
-| **Size** | ~2.2 MB (49,688 rows) |
-| **Columns** | `product_id`, `product_name`, `aisle_id`, `department_id` |
-| **Unique products** | 49,688 |
-| **Unique aisles** | 134 |
-| **Unique departments** | 21 |
-| **Nulls** | None |
-| **Product names** | Human-readable: "Banana", "Organic Strawberries", "Organic Baby Spinach", etc. |
 
-#### order_products__prior.csv
-| Property | Finding |
-|---|---|
-| **Size** | ~578 MB (32,434,489 rows) |
-| **Columns** | `order_id`, `product_id`, `add_to_cart_order`, `reordered` |
-| **Unique orders** | 3,214,874 (matches prior eval_set exactly) |
-| **Unique products** | 49,677 (nearly all products appear) |
-| **Duplicate rows** | 0 exact duplicates |
-| **Same product in same order** | 0 duplicates |
-| **Products per order** | Mean: 10.1, Median: 8, Max: 145 |
-| **Quantity field** | **No explicit quantity.** Each row = 1 unit. This is correct for Instacart: if you buy 2 bananas, there is 1 row (not 2). The count of rows per product across orders = purchase frequency (number of orders containing that product). |
-| **Nulls** | None |
+| Property               | Finding                                                                        |
+| ---------------------- | ------------------------------------------------------------------------------ |
+| **Size**               | ~2.2 MB (49,688 rows)                                                          |
+| **Columns**            | `product_id`, `product_name`, `aisle_id`, `department_id`                      |
+| **Unique products**    | 49,688                                                                         |
+| **Unique aisles**      | 134                                                                            |
+| **Unique departments** | 21                                                                             |
+| **Nulls**              | None                                                                           |
+| **Product names**      | Human-readable: "Banana", "Organic Strawberries", "Organic Baby Spinach", etc. |
 
-#### order_products__train.csv
-| Property | Finding |
-|---|---|
-| **Size** | ~25 MB (1,384,617 rows) |
-| **Columns** | Same as prior: `order_id`, `product_id`, `add_to_cart_order`, `reordered` |
-| **Unique orders** | 131,209 (matches train eval_set) |
-| **Unique products** | 39,123 |
-| **Nulls** | None |
+#### order_products\_\_prior.csv
+
+| Property                       | Finding                                                                                                                                                                                                                                |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Size**                       | ~578 MB (32,434,489 rows)                                                                                                                                                                                                              |
+| **Columns**                    | `order_id`, `product_id`, `add_to_cart_order`, `reordered`                                                                                                                                                                             |
+| **Unique orders**              | 3,214,874 (matches prior eval_set exactly)                                                                                                                                                                                             |
+| **Unique products**            | 49,677 (nearly all products appear)                                                                                                                                                                                                    |
+| **Duplicate rows**             | 0 exact duplicates                                                                                                                                                                                                                     |
+| **Same product in same order** | 0 duplicates                                                                                                                                                                                                                           |
+| **Products per order**         | Mean: 10.1, Median: 8, Max: 145                                                                                                                                                                                                        |
+| **Quantity field**             | **No explicit quantity.** Each row = 1 unit. This is correct for Instacart: if you buy 2 bananas, there is 1 row (not 2). The count of rows per product across orders = purchase frequency (number of orders containing that product). |
+| **Nulls**                      | None                                                                                                                                                                                                                                   |
+
+#### order_products\_\_train.csv
+
+| Property            | Finding                                                                   |
+| ------------------- | ------------------------------------------------------------------------- |
+| **Size**            | ~25 MB (1,384,617 rows)                                                   |
+| **Columns**         | Same as prior: `order_id`, `product_id`, `add_to_cart_order`, `reordered` |
+| **Unique orders**   | 131,209 (matches train eval_set)                                          |
+| **Unique products** | 39,123                                                                    |
+| **Nulls**           | None                                                                      |
 
 #### aisles.csv & departments.csv
-| Property | Finding |
-|---|---|
-| **aisles.csv** | 134 rows. Columns: `aisle_id`, `aisle`. Lookup table for product aisles. |
+
+| Property            | Finding                                                                        |
+| ------------------- | ------------------------------------------------------------------------------ |
+| **aisles.csv**      | 134 rows. Columns: `aisle_id`, `aisle`. Lookup table for product aisles.       |
 | **departments.csv** | 21 rows. Columns: `department_id`, `department`. Lookup table for departments. |
 
 #### Top 10 Products by Purchase Frequency (prior)
-| Rank | Product | Purchases |
-|---|---|---|
-| 1 | Banana | 472,565 |
-| 2 | Bag of Organic Bananas | 379,450 |
-| 3 | Organic Strawberries | 264,683 |
-| 4 | Organic Baby Spinach | 241,921 |
-| 5 | Organic Hass Avocado | 213,584 |
-| 6 | Organic Avocado | 176,815 |
-| 7 | Large Lemon | 152,657 |
-| 8 | Strawberries | 142,951 |
-| 9 | Limes | 140,627 |
-| 10 | Organic Whole Milk | 137,905 |
+
+| Rank | Product                | Purchases |
+| ---- | ---------------------- | --------- |
+| 1    | Banana                 | 472,565   |
+| 2    | Bag of Organic Bananas | 379,450   |
+| 3    | Organic Strawberries   | 264,683   |
+| 4    | Organic Baby Spinach   | 241,921   |
+| 5    | Organic Hass Avocado   | 213,584   |
+| 6    | Organic Avocado        | 176,815   |
+| 7    | Large Lemon            | 152,657   |
+| 8    | Strawberries           | 142,951   |
+| 9    | Limes                  | 140,627   |
+| 10   | Organic Whole Milk     | 137,905   |
 
 #### Product Frequency Distribution
-| Metric | Value |
-|---|---|
-| Mean purchases/product | 652.9 |
-| Median purchases/product | 60.0 |
-| Products with 1 purchase | 131 |
-| Products with >100 purchases | 19,979 |
-| Products with >1,000 purchases | 5,053 |
-| Products with >10,000 purchases | 492 |
+
+| Metric                          | Value  |
+| ------------------------------- | ------ |
+| Mean purchases/product          | 652.9  |
+| Median purchases/product        | 60.0   |
+| Products with 1 purchase        | 131    |
+| Products with >100 purchases    | 19,979 |
+| Products with >1,000 purchases  | 5,053  |
+| Products with >10,000 purchases | 492    |
 
 ---
 
 ## 2. Dataset Comparison
 
-| Criterion | Amazon | Instacart |
-|---|---|---|
-| **1. Product granularity** | **FATAL FLAW.** No product_id, SKU, or ASIN. Only 9 categories and 45 Category+Size combos. "Top 10 products" would mean "Top 9 categories" — the project requirement is impossible to demonstrate meaningfully. | **Excellent.** 49,688 unique products with integer `product_id` and human-readable `product_name`. Perfect for "Top 10 products." |
-| **2. Units/quantity availability** | `Qty` column exists. Overwhelmingly Qty=1 (99.7% of valid rows). Usable but low variance. | No explicit quantity column. Each row = 1 purchase event = 1 unit (the product was in the cart). This is a standard interpretation. The sheer volume (32M+ rows) produces meaningful variation. |
-| **3. Time granularity** | Date only (MM-DD-YY). No time-of-day. Only 91 unique dates over 3 months. | `order_hour_of_day` (0-23) + `order_dow` (0-6). No absolute date, but hour-of-day is available. This is **directly relevant** to intraday momentum. |
-| **4. Intraday momentum suitability** | **Cannot demonstrate intraday momentum** with date-only granularity. All transactions on the same date are indistinguishable by time. | `order_hour_of_day` allows natural simulation of intraday patterns. Orders can be replayed hour-by-hour to simulate intraday momentum. |
-| **5. Number of transactions** | 124,654 rows (106,825 valid) | 32,434,489 (prior) + 1,384,617 (train) = **33,819,106** total product transactions |
-| **6. Number of products** | 9 categories / 45 Category+Size combos | **49,688** unique products |
-| **7. Data quality** | Malformed rows (parser errors), inconsistent date formats, 6.1% null amounts, 69.6% null `fulfilled-by`, 2 entirely empty columns. Requires significant cleaning. | Clean. Zero nulls in transaction tables. Zero duplicates. Only `days_since_prior_order` has expected nulls for first orders. |
-| **8. Kafka streaming suitability** | Each row can be a Kafka message. Simple flat structure. But only 106K valid messages — stream would be very short. | Each row of `order_products__prior` becomes a Kafka message. 32M+ messages provides a long, sustained stream. Can be joined with orders for hour-of-day. |
-| **9. HDFS suitability** | 40 MB total is trivially small for HDFS. Does not demonstrate HDFS's purpose. | 578 MB for `order_products__prior` alone. Combined with orders (~109 MB), this is a meaningful size for HDFS. |
-| **10. MapReduce suitability** | Counting by 9 categories is trivial — a simple Python dict would suffice, making MapReduce feel artificial. | 49,688 products across 32M rows is a genuine use case for distributed aggregation. MapReduce has a clear purpose. |
-| **11. Processing requirements** | Minimal. Could be processed in memory trivially. | Meaningful. 32M rows across 49K products requires actual batch processing, giving MapReduce a legitimate role. |
-| **12. Demo suitability** | "Top 10 out of 9 categories" is embarrassing in a demo. No intraday change is visible. | Top 10 out of 49,688 products is compelling. Hour-of-day allows convincing intraday simulation. Product names (Banana, Organic Strawberries) are intuitive and memorable. |
-| **13. Implementation complexity** | Lower data volume but higher data cleaning effort. Product granularity problem requires inventing synthetic product IDs, which is dishonest. | Higher data volume but cleaner data. Requires a join between `orders` and `order_products__prior` to get time information, but this is straightforward. |
-| **14. Limitations** | No product-level granularity. No time-of-day. Data quality issues. Too few products for meaningful top-10. | No absolute date (only relative time). No explicit quantity (1 row = 1 unit). Large file size requires sampling or batched reading for the producer. |
-| **15. Assumptions required** | Would need to fabricate product IDs from Category+Size, invent time-of-day values, and explain why "top 10 out of 45" is meaningful. | Need to assume each row = 1 unit sold. Need to simulate absolute timestamps from `order_hour_of_day`. Both assumptions are standard and defensible. |
+| Criterion                            | Amazon                                                                                                                                                                                                           | Instacart                                                                                                                                                                                       |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Product granularity**           | **FATAL FLAW.** No product_id, SKU, or ASIN. Only 9 categories and 45 Category+Size combos. "Top 10 products" would mean "Top 9 categories" — the project requirement is impossible to demonstrate meaningfully. | **Excellent.** 49,688 unique products with integer `product_id` and human-readable `product_name`. Perfect for "Top 10 products."                                                               |
+| **2. Units/quantity availability**   | `Qty` column exists. Overwhelmingly Qty=1 (99.7% of valid rows). Usable but low variance.                                                                                                                        | No explicit quantity column. Each row = 1 purchase event = 1 unit (the product was in the cart). This is a standard interpretation. The sheer volume (32M+ rows) produces meaningful variation. |
+| **3. Time granularity**              | Date only (MM-DD-YY). No time-of-day. Only 91 unique dates over 3 months.                                                                                                                                        | `order_hour_of_day` (0-23) + `order_dow` (0-6). No absolute date, but hour-of-day is available. This is **directly relevant** to intraday momentum.                                             |
+| **4. Intraday momentum suitability** | **Cannot demonstrate intraday momentum** with date-only granularity. All transactions on the same date are indistinguishable by time.                                                                            | `order_hour_of_day` allows natural simulation of intraday patterns. Orders can be replayed hour-by-hour to simulate intraday momentum.                                                          |
+| **5. Number of transactions**        | 124,654 rows (106,825 valid)                                                                                                                                                                                     | 32,434,489 (prior) + 1,384,617 (train) = **33,819,106** total product transactions                                                                                                              |
+| **6. Number of products**            | 9 categories / 45 Category+Size combos                                                                                                                                                                           | **49,688** unique products                                                                                                                                                                      |
+| **7. Data quality**                  | Malformed rows (parser errors), inconsistent date formats, 6.1% null amounts, 69.6% null `fulfilled-by`, 2 entirely empty columns. Requires significant cleaning.                                                | Clean. Zero nulls in transaction tables. Zero duplicates. Only `days_since_prior_order` has expected nulls for first orders.                                                                    |
+| **8. Kafka streaming suitability**   | Each row can be a Kafka message. Simple flat structure. But only 106K valid messages — stream would be very short.                                                                                               | Each row of `order_products__prior` becomes a Kafka message. 32M+ messages provides a long, sustained stream. Can be joined with orders for hour-of-day.                                        |
+| **9. HDFS suitability**              | 40 MB total is trivially small for HDFS. Does not demonstrate HDFS's purpose.                                                                                                                                    | 578 MB for `order_products__prior` alone. Combined with orders (~109 MB), this is a meaningful size for HDFS.                                                                                   |
+| **10. MapReduce suitability**        | Counting by 9 categories is trivial — a simple Python dict would suffice, making MapReduce feel artificial.                                                                                                      | 49,688 products across 32M rows is a genuine use case for distributed aggregation. MapReduce has a clear purpose.                                                                               |
+| **11. Processing requirements**      | Minimal. Could be processed in memory trivially.                                                                                                                                                                 | Meaningful. 32M rows across 49K products requires actual batch processing, giving MapReduce a legitimate role.                                                                                  |
+| **12. Demo suitability**             | "Top 10 out of 9 categories" is embarrassing in a demo. No intraday change is visible.                                                                                                                           | Top 10 out of 49,688 products is compelling. Hour-of-day allows convincing intraday simulation. Product names (Banana, Organic Strawberries) are intuitive and memorable.                       |
+| **13. Implementation complexity**    | Lower data volume but higher data cleaning effort. Product granularity problem requires inventing synthetic product IDs, which is dishonest.                                                                     | Higher data volume but cleaner data. Requires a join between `orders` and `order_products__prior` to get time information, but this is straightforward.                                         |
+| **14. Limitations**                  | No product-level granularity. No time-of-day. Data quality issues. Too few products for meaningful top-10.                                                                                                       | No absolute date (only relative time). No explicit quantity (1 row = 1 unit). Large file size requires sampling or batched reading for the producer.                                            |
+| **15. Assumptions required**         | Would need to fabricate product IDs from Category+Size, invent time-of-day values, and explain why "top 10 out of 45" is meaningful.                                                                             | Need to assume each row = 1 unit sold. Need to simulate absolute timestamps from `order_hour_of_day`. Both assumptions are standard and defensible.                                             |
 
 ---
 
@@ -172,6 +179,7 @@
 The Amazon dataset has a **fatal flaw for this project**: it contains no product-level identifiers. With only 9 categories (or 45 Category+Size combinations), the core requirement — "Top 10 Products by Units Sold" — cannot be demonstrated meaningfully. Ranking 9 categories is not ranking products. Fabricating product IDs would be dishonest and would not survive a viva question like "Show me the actual product identifier in the raw data."
 
 The Instacart dataset provides:
+
 1. **49,688 real products** with integer IDs and human-readable names — making "Top 10" genuinely selective
 2. **`order_hour_of_day` (0-23)** — natural intraday time information that directly supports momentum analysis
 3. **32.4 million transactions** — providing meaningful volume for Kafka streaming, HDFS storage, and MapReduce processing
@@ -180,6 +188,7 @@ The Instacart dataset provides:
 
 > [!IMPORTANT]
 > **Data files used from Instacart:**
+>
 > - `order_products__prior.csv` — primary transaction data (32.4M rows)
 > - `orders.csv` — for `order_hour_of_day` time information
 > - `products.csv` — product names lookup
@@ -192,22 +201,22 @@ The Instacart dataset provides:
 
 ### Limitations
 
-| Limitation | Detail |
-|---|---|
-| **No absolute dates** | `orders.csv` has `order_dow` and `order_hour_of_day` but no calendar date. We cannot reconstruct the actual date of any order. |
-| **No explicit quantity** | Each row in `order_products__prior` = 1 purchase event. If a customer bought 3 bananas, there is still only 1 row. We count purchase frequency, not literal unit quantity. |
-| **No real-time API** | This is historical data. The "live stream" is a simulation. |
-| **32M rows is large** | The producer cannot load all 32M rows into memory at once. Must use chunked/streaming reads. |
-| **`order_products__prior` has no time info** | Must JOIN with `orders.csv` to get `order_hour_of_day`. |
+| Limitation                                   | Detail                                                                                                                                                                     |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **No absolute dates**                        | `orders.csv` has `order_dow` and `order_hour_of_day` but no calendar date. We cannot reconstruct the actual date of any order.                                             |
+| **No explicit quantity**                     | Each row in `order_products__prior` = 1 purchase event. If a customer bought 3 bananas, there is still only 1 row. We count purchase frequency, not literal unit quantity. |
+| **No real-time API**                         | This is historical data. The "live stream" is a simulation.                                                                                                                |
+| **32M rows is large**                        | The producer cannot load all 32M rows into memory at once. Must use chunked/streaming reads.                                                                               |
+| **`order_products__prior` has no time info** | Must JOIN with `orders.csv` to get `order_hour_of_day`.                                                                                                                    |
 
 ### Assumptions (Documented and Defensible)
 
-| Assumption | Justification |
-|---|---|
-| **1 row = 1 unit sold** | Standard interpretation for Instacart data. Each row represents one product being added to a cart and purchased. This is the "units sold" metric. |
-| **`order_hour_of_day` represents intraday time** | This is a real field from the Instacart dataset. We use it to simulate the hour at which a transaction occurred. |
-| **Simulated wall-clock timestamps** | The producer assigns `event_time` = current wall-clock time when producing to Kafka. The `order_hour_of_day` from the dataset is preserved as metadata but the windowing system uses `event_time` (production time). This is the honest approach: we acknowledge the simulation. |
-| **We stream a sample, not all 32M rows** | For practical demos, the producer reads rows in order and streams them at a configurable rate. The first N rows are sufficient for demonstration. |
+| Assumption                                       | Justification                                                                                                                                                                                                                                                                    |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1 row = 1 unit sold**                          | Standard interpretation for Instacart data. Each row represents one product being added to a cart and purchased. This is the "units sold" metric.                                                                                                                                |
+| **`order_hour_of_day` represents intraday time** | This is a real field from the Instacart dataset. We use it to simulate the hour at which a transaction occurred.                                                                                                                                                                 |
+| **Simulated wall-clock timestamps**              | The producer assigns `event_time` = current wall-clock time when producing to Kafka. The `order_hour_of_day` from the dataset is preserved as metadata but the windowing system uses `event_time` (production time). This is the honest approach: we acknowledge the simulation. |
+| **We stream a sample, not all 32M rows**         | For practical demos, the producer reads rows in order and streams them at a configurable rate. The first N rows are sufficient for demonstration.                                                                                                                                |
 
 ---
 
@@ -268,17 +277,17 @@ The proposed architecture is **accepted with one structural refinement**: the Ra
 
 ### Component Specifications
 
-| Component | Purpose | Input | Output | Technology | Lifecycle | Dependencies |
-|---|---|---|---|---|---|---|
-| **Instacart Dataset** | Historical source data | Raw CSV files | Read by Producer | CSV files on disk | Static, never modified | None |
-| **Python Producer** | Simulate live transaction stream from historical data | `order_products__prior.csv` + `orders.csv` + `products.csv` | Kafka messages to `sales-events` topic | Python + `kafka-python` | Long-running process. Reads CSV in chunks, produces at configurable rate. | Kafka broker |
-| **Kafka Broker** | Message queue for transaction events | Producer messages | Consumer reads | Apache Kafka (Docker) | Always running (Docker container) | Zookeeper or KRaft |
-| **Python Consumer + Orchestrator** | Consume messages, write to HDFS, trigger MapReduce per window | Kafka messages | Files on HDFS + triggers MapReduce | Python + `kafka-python` + `subprocess` (for HDFS/MR commands) | Long-running process. Accumulates messages per window, writes to HDFS, launches MapReduce. | Kafka, HDFS, Hadoop |
-| **HDFS** | Distributed storage for streaming data and MapReduce I/O | Consumer writes CSV files | MapReduce reads, ranking engine reads output | Hadoop HDFS (Docker) | Always running (Docker container) | Hadoop container |
-| **Hadoop Streaming MapReduce** | Aggregate units sold per product per window | HDFS window files (CSV/TSV) | HDFS output files (product_id, units count) | Hadoop Streaming + Python mapper/reducer | Batch job triggered per window | HDFS, mapper.py, reducer.py |
-| **Python Ranking + Momentum Engine** | Compute top-10 ranking and momentum metrics | MapReduce output (read from HDFS) + previous window state | JSON file with ranking data | Python script | Runs after each MapReduce job completes | MapReduce output |
-| **FastAPI** | REST API serving ranking data to frontend | Ranking JSON file | HTTP JSON responses | FastAPI + Uvicorn | Always running | Ranking JSON file |
-| **React Dashboard** | Visualization of top-10 products and momentum | FastAPI REST endpoints | Browser UI | React (Vite) | Always running (dev server) | FastAPI |
+| Component                            | Purpose                                                       | Input                                                       | Output                                       | Technology                                                    | Lifecycle                                                                                  | Dependencies                |
+| ------------------------------------ | ------------------------------------------------------------- | ----------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | --------------------------- |
+| **Instacart Dataset**                | Historical source data                                        | Raw CSV files                                               | Read by Producer                             | CSV files on disk                                             | Static, never modified                                                                     | None                        |
+| **Python Producer**                  | Simulate live transaction stream from historical data         | `order_products__prior.csv` + `orders.csv` + `products.csv` | Kafka messages to `sales-events` topic       | Python + `kafka-python`                                       | Long-running process. Reads CSV in chunks, produces at configurable rate.                  | Kafka broker                |
+| **Kafka Broker**                     | Message queue for transaction events                          | Producer messages                                           | Consumer reads                               | Apache Kafka (Docker)                                         | Always running (Docker container)                                                          | Zookeeper or KRaft          |
+| **Python Consumer + Orchestrator**   | Consume messages, write to HDFS, trigger MapReduce per window | Kafka messages                                              | Files on HDFS + triggers MapReduce           | Python + `kafka-python` + `subprocess` (for HDFS/MR commands) | Long-running process. Accumulates messages per window, writes to HDFS, launches MapReduce. | Kafka, HDFS, Hadoop         |
+| **HDFS**                             | Distributed storage for streaming data and MapReduce I/O      | Consumer writes CSV files                                   | MapReduce reads, ranking engine reads output | Hadoop HDFS (Docker)                                          | Always running (Docker container)                                                          | Hadoop container            |
+| **Hadoop Streaming MapReduce**       | Aggregate units sold per product per window                   | HDFS window files (CSV/TSV)                                 | HDFS output files (product_id, units count)  | Hadoop Streaming + Python mapper/reducer                      | Batch job triggered per window                                                             | HDFS, mapper.py, reducer.py |
+| **Python Ranking + Momentum Engine** | Compute top-10 ranking and momentum metrics                   | MapReduce output (read from HDFS) + previous window state   | JSON file with ranking data                  | Python script                                                 | Runs after each MapReduce job completes                                                    | MapReduce output            |
+| **FastAPI**                          | REST API serving ranking data to frontend                     | Ranking JSON file                                           | HTTP JSON responses                          | FastAPI + Uvicorn                                             | Always running                                                                             | Ranking JSON file           |
+| **React Dashboard**                  | Visualization of top-10 products and momentum                 | FastAPI REST endpoints                                      | Browser UI                                   | React (Vite)                                                  | Always running (dev server)                                                                | FastAPI                     |
 
 ---
 
@@ -333,14 +342,14 @@ Step 6: DISPLAY
 
 ### Data Format at Each Stage
 
-| Stage | Format | Example |
-|---|---|---|
-| CSV source | CSV | `2,33120,1,1` |
-| Kafka message | JSON | `{"product_id": 33120, "product_name": "Organic Egg Whites", "units": 1, "event_time": "2026-09-27T17:15:00Z", "order_hour": 10, "source": "historical_simulation"}` |
-| HDFS window file | TSV | `33120\tOrganic Egg Whites\t1\t2026-09-27T17:15:00Z` |
-| MapReduce mapper output | TSV (stdout) | `33120\t1` |
-| MapReduce reducer output | TSV | `33120\t45` |
-| Ranking JSON | JSON | See FastAPI section |
+| Stage                    | Format       | Example                                                                                                                                                              |
+| ------------------------ | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CSV source               | CSV          | `2,33120,1,1`                                                                                                                                                        |
+| Kafka message            | JSON         | `{"product_id": 33120, "product_name": "Organic Egg Whites", "units": 1, "event_time": "2026-09-27T17:15:00Z", "order_hour": 10, "source": "historical_simulation"}` |
+| HDFS window file         | TSV          | `33120\tOrganic Egg Whites\t1\t2026-09-27T17:15:00Z`                                                                                                                 |
+| MapReduce mapper output  | TSV (stdout) | `33120\t1`                                                                                                                                                           |
+| MapReduce reducer output | TSV          | `33120\t45`                                                                                                                                                          |
+| Ranking JSON             | JSON         | See FastAPI section                                                                                                                                                  |
 
 ---
 
@@ -348,20 +357,20 @@ Step 6: DISPLAY
 
 ### Broker Architecture
 
-| Property | Value | Rationale |
-|---|---|---|
-| **Mode** | KRaft (no Zookeeper) | Simpler. One fewer container. KRaft is stable in Kafka 3.x+. For a college project, reducing moving parts is critical. |
-| **Brokers** | 1 | Single-node is sufficient. This is a lab project, not production. |
-| **Docker image** | `apache/kafka:3.7.0` (official) | Includes KRaft support out of the box. |
+| Property         | Value                           | Rationale                                                                                                              |
+| ---------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Mode**         | KRaft (no Zookeeper)            | Simpler. One fewer container. KRaft is stable in Kafka 3.x+. For a college project, reducing moving parts is critical. |
+| **Brokers**      | 1                               | Single-node is sufficient. This is a lab project, not production.                                                      |
+| **Docker image** | `apache/kafka:3.7.0` (official) | Includes KRaft support out of the box.                                                                                 |
 
 ### Topic Design
 
-| Property | Value | Rationale |
-|---|---|---|
-| **Topic name** | `sales-events` | Descriptive, simple. |
-| **Partitions** | 3 | Enough to demonstrate partitioning. More than 1 to show distributed concepts. Not so many as to be wasteful. |
-| **Replication factor** | 1 | Single broker, so replication factor must be 1. |
-| **Retention** | 24 hours (`retention.ms=86400000`) | Sufficient for demo/testing. Prevents unbounded growth. |
+| Property               | Value                              | Rationale                                                                                                    |
+| ---------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Topic name**         | `sales-events`                     | Descriptive, simple.                                                                                         |
+| **Partitions**         | 3                                  | Enough to demonstrate partitioning. More than 1 to show distributed concepts. Not so many as to be wasteful. |
+| **Replication factor** | 1                                  | Single broker, so replication factor must be 1.                                                              |
+| **Retention**          | 24 hours (`retention.ms=86400000`) | Sufficient for demo/testing. Prevents unbounded growth.                                                      |
 
 ### Message Design
 
@@ -371,15 +380,15 @@ Step 6: DISPLAY
 
 ```json
 {
-    "product_id": 24852,
-    "product_name": "Banana",
-    "category": "fresh fruits",
-    "department": "produce",
-    "units": 1,
-    "event_time": "2026-09-27T17:15:32.456Z",
-    "order_hour": 14,
-    "order_dow": 2,
-    "source": "historical_simulation"
+  "product_id": 24852,
+  "product_name": "Banana",
+  "category": "fresh fruits",
+  "department": "produce",
+  "units": 1,
+  "event_time": "2026-09-27T17:15:32.456Z",
+  "order_hour": 14,
+  "order_dow": 2,
+  "source": "historical_simulation"
 }
 ```
 
@@ -389,24 +398,24 @@ Step 6: DISPLAY
 
 ### Producer Behavior
 
-| Property | Value |
-|---|---|
-| **Library** | `kafka-python` |
-| **Batch size** | Default (16KB) |
-| **Linger** | 10ms |
-| **Acks** | 1 (leader only — sufficient for single-broker) |
-| **Rate control** | Configurable `PRODUCER_RATE` env var. Default: 50 messages/second for dev, 200/sec for demo. |
-| **Burst mode** | Configurable via `BURST_PRODUCT_ID` and `BURST_MULTIPLIER` env vars. When set, the producer generates extra synthetic transactions for the specified product. |
+| Property         | Value                                                                                                                                                         |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Library**      | `kafka-python`                                                                                                                                                |
+| **Batch size**   | Default (16KB)                                                                                                                                                |
+| **Linger**       | 10ms                                                                                                                                                          |
+| **Acks**         | 1 (leader only — sufficient for single-broker)                                                                                                                |
+| **Rate control** | Configurable `PRODUCER_RATE` env var. Default: 50 messages/second for dev, 200/sec for demo.                                                                  |
+| **Burst mode**   | Configurable via `BURST_PRODUCT_ID` and `BURST_MULTIPLIER` env vars. When set, the producer generates extra synthetic transactions for the specified product. |
 
 ### Consumer Behavior
 
-| Property | Value |
-|---|---|
-| **Library** | `kafka-python` |
-| **Consumer group** | `ranking-engine-group` |
-| **Auto offset reset** | `earliest` |
-| **Auto commit** | `True` (with 5s interval) |
-| **Processing** | Accumulates messages in memory per window. On window boundary, writes to HDFS and triggers MapReduce. |
+| Property              | Value                                                                                                 |
+| --------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Library**           | `kafka-python`                                                                                        |
+| **Consumer group**    | `ranking-engine-group`                                                                                |
+| **Auto offset reset** | `earliest`                                                                                            |
+| **Auto commit**       | `True` (with 5s interval)                                                                             |
+| **Processing**        | Accumulates messages in memory per window. On window boundary, writes to HDFS and triggers MapReduce. |
 
 ---
 
@@ -433,11 +442,11 @@ Step 6: DISPLAY
 
 ### Storage Details
 
-| Directory | Purpose | Written by | Read by | Format | Lifecycle |
-|---|---|---|---|---|---|
-| `/bda-project/windows/` | Per-window transaction data | Consumer | MapReduce | TSV: `product_id\tproduct_name\tunits\tevent_time` | Append-only. One file per window. Retained for at least 1 hour. Older windows can be cleaned up by a script. |
-| `/bda-project/output/` | MapReduce results per window | MapReduce | Ranking engine | TSV: `product_id\ttotal_units` | One subdirectory per window. Previous window's output is needed for momentum. Keep at least 2 most recent. |
-| `/bda-project/mapreduce/` | Python mapper and reducer scripts | Uploaded once at startup | Hadoop Streaming | Python scripts | Static. Uploaded by setup script. |
+| Directory                 | Purpose                           | Written by               | Read by          | Format                                             | Lifecycle                                                                                                    |
+| ------------------------- | --------------------------------- | ------------------------ | ---------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `/bda-project/windows/`   | Per-window transaction data       | Consumer                 | MapReduce        | TSV: `product_id\tproduct_name\tunits\tevent_time` | Append-only. One file per window. Retained for at least 1 hour. Older windows can be cleaned up by a script. |
+| `/bda-project/output/`    | MapReduce results per window      | MapReduce                | Ranking engine   | TSV: `product_id\ttotal_units`                     | One subdirectory per window. Previous window's output is needed for momentum. Keep at least 2 most recent.   |
+| `/bda-project/mapreduce/` | Python mapper and reducer scripts | Uploaded once at startup | Hadoop Streaming | Python scripts                                     | Static. Uploaded by setup script.                                                                            |
 
 ### File Naming Convention
 
@@ -457,6 +466,7 @@ Step 6: DISPLAY
 ### Job Count: **1 MapReduce job per window**
 
 A single MapReduce job is sufficient because:
+
 1. The mapper extracts `(product_id, units)` from each line
 2. The reducer sums units per product_id
 3. This gives per-product unit counts for the current window
@@ -523,11 +533,13 @@ hadoop jar $HADOOP_HOME/share/hadoop/tools/lib/hadoop-streaming-*.jar \
 ### Why Momentum/Ranking is Outside MapReduce
 
 MapReduce is stateless across jobs. Computing momentum requires:
+
 - Current window's per-product counts (from current MR job)
 - Previous window's per-product counts (from previous MR job's output)
 - Cumulative totals across all windows
 
 This cross-window state is naturally managed by a Python script that:
+
 1. Reads the current MR output from HDFS
 2. Reads the previous MR output from HDFS (or from its local state file)
 3. Updates cumulative totals
@@ -542,10 +554,10 @@ This is cleaner and more explainable than attempting multi-job MapReduce chains.
 
 ### Configuration
 
-| Variable | Unit | Dev/Test Value | Demo Value | Description |
-|---|---|---|---|---|
-| `WINDOW_SIZE` | seconds | `60` | `600` | Duration of each processing window |
-| `REFRESH_INTERVAL` | seconds | `60` | `600` | How often ranking refreshes (should equal WINDOW_SIZE) |
+| Variable           | Unit    | Dev/Test Value | Demo Value | Description                                            |
+| ------------------ | ------- | -------------- | ---------- | ------------------------------------------------------ |
+| `WINDOW_SIZE`      | seconds | `60`           | `600`      | Duration of each processing window                     |
+| `REFRESH_INTERVAL` | seconds | `60`           | `600`      | How often ranking refreshes (should equal WINDOW_SIZE) |
 
 > [!IMPORTANT]
 > `WINDOW_SIZE` and `REFRESH_INTERVAL` are kept equal for simplicity. Both are in **seconds**. This is clearly documented in `.env.example`.
@@ -566,6 +578,7 @@ Time ─────────────────────────
 ### Tumbling Windows (Non-Overlapping)
 
 Each window is a fixed-length, non-overlapping time bucket:
+
 - Window boundaries are aligned to `WINDOW_SIZE` intervals from the consumer's start time.
 - When the window timer expires, the consumer:
   1. Flushes the accumulated message buffer to an HDFS file
@@ -576,6 +589,7 @@ Each window is a fixed-length, non-overlapping time bucket:
 ### Empty Windows
 
 If no messages arrive during a window:
+
 - No HDFS file is written
 - No MapReduce job is triggered
 - The previous ranking remains current
@@ -591,16 +605,16 @@ If no messages arrive during a window:
 def compute_momentum(current_units: int, previous_units: int) -> float:
     """
     Compute momentum percentage.
-    
+
     Positive = product is gaining sales velocity
     Negative = product is losing sales velocity
     Zero = no change
-    
+
     Uses max(previous_units, 1) to handle division-by-zero.
     """
     if current_units == 0 and previous_units == 0:
         return 0.0
-    
+
     denominator = max(previous_units, 1)
     momentum = ((current_units - previous_units) / denominator) * 100.0
     return round(momentum, 1)
@@ -608,14 +622,14 @@ def compute_momentum(current_units: int, previous_units: int) -> float:
 
 ### Why `max(previous_units, 1)` Instead of Special Cases
 
-| Scenario | previous | current | Formula result | Interpretation |
-|---|---|---|---|---|
-| Normal growth | 20 | 45 | +125.0% | Strong momentum |
-| Normal decline | 45 | 20 | -55.6% | Declining |
-| Steady | 30 | 30 | 0.0% | No change |
-| New product (first appearance) | 0 | 5 | +500.0% | New product burst (using max(0,1)=1 as denominator) |
-| Both zero | 0 | 0 | 0.0% | Special-cased to 0 |
-| Disappeared | 10 | 0 | -100.0% | Product stopped selling |
+| Scenario                       | previous | current | Formula result | Interpretation                                      |
+| ------------------------------ | -------- | ------- | -------------- | --------------------------------------------------- |
+| Normal growth                  | 20       | 45      | +125.0%        | Strong momentum                                     |
+| Normal decline                 | 45       | 20      | -55.6%         | Declining                                           |
+| Steady                         | 30       | 30      | 0.0%           | No change                                           |
+| New product (first appearance) | 0        | 5       | +500.0%        | New product burst (using max(0,1)=1 as denominator) |
+| Both zero                      | 0        | 0       | 0.0%           | Special-cased to 0                                  |
+| Disappeared                    | 10       | 0       | -100.0%        | Product stopped selling                             |
 
 ### Why This Formula
 
@@ -650,21 +664,22 @@ top_10 = sorted(cumulative_totals.items(), key=lambda x: x[1], reverse=True)[:10
 
 For each product in the top 10:
 
-| Metric | Source |
-|---|---|
-| `total_units` | Cumulative total across all windows |
-| `current_window_units` | Current window's MapReduce output for this product |
-| `previous_window_units` | Previous window's MapReduce output for this product |
-| `momentum_pct` | `compute_momentum(current_window_units, previous_window_units)` |
+| Metric                  | Source                                                          |
+| ----------------------- | --------------------------------------------------------------- |
+| `total_units`           | Cumulative total across all windows                             |
+| `current_window_units`  | Current window's MapReduce output for this product              |
+| `previous_window_units` | Previous window's MapReduce output for this product             |
+| `momentum_pct`          | `compute_momentum(current_window_units, previous_window_units)` |
 
 ### Momentum Movers (Supplementary)
 
 In addition to the primary top-10, the ranking engine also produces a "Top 5 Momentum Movers" list:
+
 - All products with `current_window_units > 0`
 - Sorted by `momentum_pct` descending
 - Top 5
 
-This allows the dashboard to show products that are *surging* even if they aren't in the overall top 10 yet.
+This allows the dashboard to show products that are _surging_ even if they aren't in the overall top 10 yet.
 
 ### State Management
 
@@ -688,11 +703,11 @@ This file is read on startup (for recovery) and written after each window.
 
 ### Endpoints
 
-| Endpoint | Method | Purpose | Response |
-|---|---|---|---|
-| `GET /api/health` | GET | Health check + system status | `{"status": "ok", "last_updated": "...", "current_window": "..."}` |
-| `GET /api/rankings` | GET | Top-10 ranking with momentum data | Full ranking response (see below) |
-| `POST /api/burst` | POST | Trigger a sales burst for demo | `{"status": "burst_started", "product_id": ..., "multiplier": ...}` |
+| Endpoint            | Method | Purpose                           | Response                                                            |
+| ------------------- | ------ | --------------------------------- | ------------------------------------------------------------------- |
+| `GET /api/health`   | GET    | Health check + system status      | `{"status": "ok", "last_updated": "...", "current_window": "..."}`  |
+| `GET /api/rankings` | GET    | Top-10 ranking with momentum data | Full ranking response (see below)                                   |
+| `POST /api/burst`   | POST   | Trigger a sales burst for demo    | `{"status": "burst_started", "product_id": ..., "multiplier": ...}` |
 
 Three endpoints is sufficient. The `/api/burst` endpoint is for demo convenience — it tells the producer to start generating extra transactions for a specific product.
 
@@ -700,47 +715,47 @@ Three endpoints is sufficient. The `/api/burst` endpoint is for demo convenience
 
 ```json
 {
-    "last_updated": "2026-09-27T17:16:05Z",
-    "window_id": "window_20260927_171600",
-    "window_size_seconds": 60,
-    "total_windows_processed": 5,
-    "top_10": [
-        {
-            "rank": 1,
-            "product_id": 24852,
-            "product_name": "Banana",
-            "category": "fresh fruits",
-            "department": "produce",
-            "total_units": 1250,
-            "current_window_units": 45,
-            "previous_window_units": 20,
-            "momentum_pct": 125.0,
-            "momentum_direction": "up"
-        },
-        {
-            "rank": 2,
-            "product_id": 13176,
-            "product_name": "Bag of Organic Bananas",
-            "category": "fresh fruits",
-            "department": "produce",
-            "total_units": 980,
-            "current_window_units": 30,
-            "previous_window_units": 35,
-            "momentum_pct": -14.3,
-            "momentum_direction": "down"
-        }
-    ],
-    "momentum_movers": [
-        {
-            "product_id": 47209,
-            "product_name": "Organic Hass Avocado",
-            "total_units": 120,
-            "current_window_units": 25,
-            "previous_window_units": 3,
-            "momentum_pct": 733.3,
-            "momentum_direction": "up"
-        }
-    ]
+  "last_updated": "2026-09-27T17:16:05Z",
+  "window_id": "window_20260927_171600",
+  "window_size_seconds": 60,
+  "total_windows_processed": 5,
+  "top_10": [
+    {
+      "rank": 1,
+      "product_id": 24852,
+      "product_name": "Banana",
+      "category": "fresh fruits",
+      "department": "produce",
+      "total_units": 1250,
+      "current_window_units": 45,
+      "previous_window_units": 20,
+      "momentum_pct": 125.0,
+      "momentum_direction": "up"
+    },
+    {
+      "rank": 2,
+      "product_id": 13176,
+      "product_name": "Bag of Organic Bananas",
+      "category": "fresh fruits",
+      "department": "produce",
+      "total_units": 980,
+      "current_window_units": 30,
+      "previous_window_units": 35,
+      "momentum_pct": -14.3,
+      "momentum_direction": "down"
+    }
+  ],
+  "momentum_movers": [
+    {
+      "product_id": 47209,
+      "product_name": "Organic Hass Avocado",
+      "total_units": 120,
+      "current_window_units": 25,
+      "previous_window_units": 3,
+      "momentum_pct": 733.3,
+      "momentum_direction": "up"
+    }
+  ]
 }
 ```
 
@@ -749,6 +764,7 @@ Three endpoints is sufficient. The `/api/burst` endpoint is for demo convenience
 FastAPI reads `state/ranking_output.json` from disk on each request. This file is written by the ranking engine after each window.
 
 **Why file-based, not database:**
+
 - Eliminates PostgreSQL/database dependency
 - The ranking output is small (< 1KB)
 - File I/O is sufficient for single-user demo
@@ -764,9 +780,9 @@ FastAPI must enable CORS for the React dev server (`http://localhost:5173`).
 
 ```json
 {
-    "product_id": 47209,
-    "multiplier": 10,
-    "duration_seconds": 120
+  "product_id": 47209,
+  "multiplier": 10,
+  "duration_seconds": 120
 }
 ```
 
@@ -791,23 +807,23 @@ const API_URL = "http://localhost:8000/api/rankings";
 
 // Fetch and update state
 useEffect(() => {
-    const interval = setInterval(async () => {
-        const res = await fetch(API_URL);
-        const data = await res.json();
-        setRankings(data);
-    }, POLL_INTERVAL);
-    return () => clearInterval(interval);
+  const interval = setInterval(async () => {
+    const res = await fetch(API_URL);
+    const data = await res.json();
+    setRankings(data);
+  }, POLL_INTERVAL);
+  return () => clearInterval(interval);
 }, []);
 ```
 
 ### Dashboard Components
 
-| Component | Data Source | Display |
-|---|---|---|
-| **Top-10 Table** | `top_10` array | Rank, product name, total units, current/previous window units, momentum %, up/down arrow |
-| **Momentum Movers** | `momentum_movers` array | Product name, momentum %, current vs previous units |
-| **Status Bar** | `last_updated`, `window_id`, `total_windows_processed` | Last update time, current window, windows processed count |
-| **Burst Button** | `POST /api/burst` | Dropdown to select a product, button to trigger burst |
+| Component           | Data Source                                            | Display                                                                                   |
+| ------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| **Top-10 Table**    | `top_10` array                                         | Rank, product name, total units, current/previous window units, momentum %, up/down arrow |
+| **Momentum Movers** | `momentum_movers` array                                | Product name, momentum %, current vs previous units                                       |
+| **Status Bar**      | `last_updated`, `window_id`, `total_windows_processed` | Last update time, current window, windows processed count                                 |
+| **Burst Button**    | `POST /api/burst`                                      | Dropdown to select a product, button to trigger burst                                     |
 
 ### Visual Design Requirements
 
@@ -906,12 +922,12 @@ BDA Mini Project/
 
 ### Purpose of Key Files
 
-| File/Directory | Purpose |
-|---|---|
-| `config/settings.py` | Single source of truth for all configuration. Reads from environment variables with defaults. Every other module imports from here. |
-| `state/` | Runtime state. Not committed to git. Contains the ranking engine's state and the current ranking output that FastAPI serves. |
-| `scripts/setup_hdfs.sh` | Run once to create HDFS directories and upload mapper/reducer scripts. |
-| `scripts/run_mapreduce.sh` | Called by the consumer/orchestrator to invoke Hadoop Streaming. Parameterized with input/output paths. |
+| File/Directory             | Purpose                                                                                                                             |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `config/settings.py`       | Single source of truth for all configuration. Reads from environment variables with defaults. Every other module imports from here. |
+| `state/`                   | Runtime state. Not committed to git. Contains the ranking engine's state and the current ranking output that FastAPI serves.        |
+| `scripts/setup_hdfs.sh`    | Run once to create HDFS directories and upload mapper/reducer scripts.                                                              |
+| `scripts/run_mapreduce.sh` | Called by the consumer/orchestrator to invoke Hadoop Streaming. Parameterized with input/output paths.                              |
 
 ---
 
@@ -919,20 +935,20 @@ BDA Mini Project/
 
 ### Containers
 
-| Container | Image | Purpose | Ports | Volumes |
-|---|---|---|---|---|
-| `kafka` | `apache/kafka:3.7.0` | Kafka broker in KRaft mode | `9092:9092` | `kafka-data:/var/lib/kafka/data` |
-| `hadoop` | `apache/hadoop:3.3.6` | HDFS NameNode + DataNode + YARN (single-node) | `9870:9870` (HDFS Web UI), `8088:8088` (YARN), `9000:9000` (HDFS RPC) | `hadoop-data:/opt/hadoop/data`, `./mapreduce:/opt/mapreduce` |
+| Container | Image                 | Purpose                                       | Ports                                                                 | Volumes                                                      |
+| --------- | --------------------- | --------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `kafka`   | `apache/kafka:3.7.0`  | Kafka broker in KRaft mode                    | `9092:9092`                                                           | `kafka-data:/var/lib/kafka/data`                             |
+| `hadoop`  | `apache/hadoop:3.3.6` | HDFS NameNode + DataNode + YARN (single-node) | `9870:9870` (HDFS Web UI), `8088:8088` (YARN), `9000:9000` (HDFS RPC) | `hadoop-data:/opt/hadoop/data`, `./mapreduce:/opt/mapreduce` |
 
 ### What Runs Locally (Not in Docker)
 
-| Component | Reason |
-|---|---|
-| Python Producer | Needs access to `datasets/` directory. Simpler to run locally with `kafka-python`. |
+| Component                    | Reason                                                                                                                                          |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Python Producer              | Needs access to `datasets/` directory. Simpler to run locally with `kafka-python`.                                                              |
 | Python Consumer/Orchestrator | Needs to invoke `hdfs dfs` and `hadoop jar` commands against the Docker containers. Runs locally, connects to Kafka and HDFS via exposed ports. |
-| Ranking Engine | Runs locally, reads from HDFS via CLI. |
-| FastAPI | Runs locally, reads local `state/` files. |
-| React | Runs locally via Vite dev server. |
+| Ranking Engine               | Runs locally, reads from HDFS via CLI.                                                                                                          |
+| FastAPI                      | Runs locally, reads local `state/` files.                                                                                                       |
+| React                        | Runs locally via Vite dev server.                                                                                                               |
 
 > [!TIP]
 > Running Python components locally avoids the complexity of building custom Docker images and mounting volumes. The producer/consumer connect to Kafka on `localhost:9092` and HDFS on `localhost:9000`.
@@ -940,7 +956,7 @@ BDA Mini Project/
 ### Docker Compose
 
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
   kafka:
@@ -973,9 +989,9 @@ services:
     image: apache/hadoop:3.3.6
     container_name: bda-hadoop
     ports:
-      - "9870:9870"   # HDFS NameNode Web UI
-      - "8088:8088"   # YARN ResourceManager Web UI
-      - "9000:9000"   # HDFS RPC
+      - "9870:9870" # HDFS NameNode Web UI
+      - "8088:8088" # YARN ResourceManager Web UI
+      - "9000:9000" # HDFS RPC
     volumes:
       - hadoop-data:/opt/hadoop/data
       - ./mapreduce:/opt/mapreduce
@@ -1028,156 +1044,158 @@ volumes:
 
 ### Stage 1: Environment Verification
 
-| Property | Detail |
-|---|---|
-| **Objective** | Verify all required tools are installed and accessible |
-| **Files** | None created |
-| **Tasks** | 1. Verify Python 3.11+ (`python3 --version`) 2. Verify Docker (`docker --version`, `docker compose version`) 3. Verify Node.js/npm (`node --version`, `npm --version`) 4. Verify `apache/hadoop:3.3.6` image exists (`docker images`) 5. Pull Kafka image (`docker pull apache/kafka:3.7.0`) 6. Verify dataset files exist and are readable |
-| **Expected output** | All version checks pass. Both Docker images available. |
-| **Verification** | `python3 --version && docker images | grep -E "kafka|hadoop" && node --version` |
-| **Working afterward** | Development environment is confirmed ready |
-| **Common failures** | Docker not running, images not pulled, Python version too old |
+| Property              | Detail                                                                                                                                                                                                                                                                                                                                      |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- | -------------------------- |
+| **Objective**         | Verify all required tools are installed and accessible                                                                                                                                                                                                                                                                                      |
+| **Files**             | None created                                                                                                                                                                                                                                                                                                                                |
+| **Tasks**             | 1. Verify Python 3.11+ (`python3 --version`) 2. Verify Docker (`docker --version`, `docker compose version`) 3. Verify Node.js/npm (`node --version`, `npm --version`) 4. Verify `apache/hadoop:3.3.6` image exists (`docker images`) 5. Pull Kafka image (`docker pull apache/kafka:3.7.0`) 6. Verify dataset files exist and are readable |
+| **Expected output**   | All version checks pass. Both Docker images available.                                                                                                                                                                                                                                                                                      |
+| **Verification**      | `python3 --version && docker images                                                                                                                                                                                                                                                                                                         | grep -E "kafka | hadoop" && node --version` |
+| **Working afterward** | Development environment is confirmed ready                                                                                                                                                                                                                                                                                                  |
+| **Common failures**   | Docker not running, images not pulled, Python version too old                                                                                                                                                                                                                                                                               |
 
 ### Stage 2: Project Scaffolding & Configuration
 
-| Property | Detail |
-|---|---|
-| **Objective** | Create directory structure, config files, and install dependencies |
-| **Files to create** | `.env`, `.env.example`, `.env.demo`, `config/settings.py`, `requirements.txt`, `.gitignore`, directory stubs (`producer/`, `consumer/`, `mapreduce/`, `engine/`, `api/`, `scripts/`, `state/`, `tests/`) |
-| **Tasks** | 1. Create all directories 2. Create `.env` with dev defaults 3. Create `config/settings.py` reading env vars 4. Create `requirements.txt` 5. `pip install -r requirements.txt` 6. Create `.gitignore` |
-| **Expected output** | All directories exist. `config/settings.py` imports cleanly. Dependencies installed. |
-| **Verification** | `python3 -c "from config.settings import Settings; s = Settings(); print(s.WINDOW_SIZE)"` should print `60` |
-| **Working afterward** | Project structure exists. Configuration module works. |
-| **Common failures** | Missing `__init__.py` files, import path issues |
+| Property              | Detail                                                                                                                                                                                                   |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Objective**         | Create directory structure, config files, and install dependencies                                                                                                                                       |
+| **Files to create**   | `.env`, `.env.example`, `.env.demo`, `config/settings.py`, `requirements.txt`, `.gitignore`, directory stubs (`producer/`, `consumer/`, `mapreduce/`, `engine/`, `api/`, `scripts/`, `state/`, `tests/`) |
+| **Tasks**             | 1. Create all directories 2. Create `.env` with dev defaults 3. Create `config/settings.py` reading env vars 4. Create `requirements.txt` 5. `pip install -r requirements.txt` 6. Create `.gitignore`    |
+| **Expected output**   | All directories exist. `config/settings.py` imports cleanly. Dependencies installed.                                                                                                                     |
+| **Verification**      | `python3 -c "from config.settings import Settings; s = Settings(); print(s.WINDOW_SIZE)"` should print `60`                                                                                              |
+| **Working afterward** | Project structure exists. Configuration module works.                                                                                                                                                    |
+| **Common failures**   | Missing `__init__.py` files, import path issues                                                                                                                                                          |
 
 ### Stage 3: Docker Compose + Infrastructure
 
-| Property | Detail |
-|---|---|
-| **Objective** | Get Kafka and Hadoop running in Docker |
-| **Files to create** | `docker-compose.yml` |
-| **Tasks** | 1. Create `docker-compose.yml` with Kafka (KRaft) and Hadoop services 2. `docker compose up -d` 3. Wait for health checks 4. Verify Kafka: `docker exec bda-kafka /opt/kafka/bin/kafka-topics.sh --list --bootstrap-server localhost:9092` 5. Verify HDFS: `docker exec bda-hadoop hdfs dfs -ls /` 6. Create Kafka topic 7. Create HDFS directories |
-| **Expected output** | Both containers running. Kafka topic exists. HDFS directories exist. |
-| **Verification** | `docker compose ps` shows both healthy. `kafka-topics.sh --describe --topic sales-events` returns topic info. `hdfs dfs -ls /bda-project/` shows directories. |
-| **Working afterward** | Kafka and HDFS infrastructure is operational |
-| **Common failures** | Port conflicts (9092, 9870, 9000). Hadoop format issues. KRaft cluster ID. Kafka image entrypoint differences. |
+| Property              | Detail                                                                                                                                                                                                                                                                                                                                              |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Objective**         | Get Kafka and Hadoop running in Docker                                                                                                                                                                                                                                                                                                              |
+| **Files to create**   | `docker-compose.yml`                                                                                                                                                                                                                                                                                                                                |
+| **Tasks**             | 1. Create `docker-compose.yml` with Kafka (KRaft) and Hadoop services 2. `docker compose up -d` 3. Wait for health checks 4. Verify Kafka: `docker exec bda-kafka /opt/kafka/bin/kafka-topics.sh --list --bootstrap-server localhost:9092` 5. Verify HDFS: `docker exec bda-hadoop hdfs dfs -ls /` 6. Create Kafka topic 7. Create HDFS directories |
+| **Expected output**   | Both containers running. Kafka topic exists. HDFS directories exist.                                                                                                                                                                                                                                                                                |
+| **Verification**      | `docker compose ps` shows both healthy. `kafka-topics.sh --describe --topic sales-events` returns topic info. `hdfs dfs -ls /bda-project/` shows directories.                                                                                                                                                                                       |
+| **Working afterward** | Kafka and HDFS infrastructure is operational                                                                                                                                                                                                                                                                                                        |
+| **Common failures**   | Port conflicts (9092, 9870, 9000). Hadoop format issues. KRaft cluster ID. Kafka image entrypoint differences.                                                                                                                                                                                                                                      |
 
 > [!IMPORTANT]
 > **This is the most likely stage to have issues.** The Hadoop Docker image may require specific configuration. The implementer should be prepared to debug container startup. Check logs with `docker logs bda-hadoop` and `docker logs bda-kafka`.
 
 ### Stage 4: MapReduce Mapper & Reducer
 
-| Property | Detail |
-|---|---|
-| **Objective** | Create and test mapper.py and reducer.py locally before involving Hadoop |
-| **Files to create** | `mapreduce/mapper.py`, `mapreduce/reducer.py` |
-| **Tasks** | 1. Write `mapper.py`: reads TSV from stdin, emits `product_id\tunits` 2. Write `reducer.py`: reads sorted key-value pairs from stdin, sums units per product_id 3. Test locally using Unix pipes: `cat test_data.tsv \| python3 mapper.py \| sort \| python3 reducer.py` 4. Create `tests/test_data/synthetic_transactions.tsv` |
-| **Expected output** | Mapper and reducer produce correct output on synthetic data |
-| **Verification** | `echo -e "24852\tBanana\t1\t2026-09-27T17:00:00Z\n24852\tBanana\t1\t2026-09-27T17:00:01Z\n13176\tBag of Organic Bananas\t1\t2026-09-27T17:00:02Z" \| python3 mapreduce/mapper.py \| sort \| python3 mapreduce/reducer.py` should output `13176\t1\n24852\t2` |
-| **Working afterward** | MapReduce logic is verified locally |
-| **Common failures** | Tab vs space issues. Python shebang. Encoding. Missing `#!/usr/bin/env python3`. |
+| Property              | Detail                                                                                                                                                                                                                                                                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Objective**         | Create and test mapper.py and reducer.py locally before involving Hadoop                                                                                                                                                                                                                                                        |
+| **Files to create**   | `mapreduce/mapper.py`, `mapreduce/reducer.py`                                                                                                                                                                                                                                                                                   |
+| **Tasks**             | 1. Write `mapper.py`: reads TSV from stdin, emits `product_id\tunits` 2. Write `reducer.py`: reads sorted key-value pairs from stdin, sums units per product_id 3. Test locally using Unix pipes: `cat test_data.tsv \| python3 mapper.py \| sort \| python3 reducer.py` 4. Create `tests/test_data/synthetic_transactions.tsv` |
+| **Expected output**   | Mapper and reducer produce correct output on synthetic data                                                                                                                                                                                                                                                                     |
+| **Verification**      | `echo -e "24852\tBanana\t1\t2026-09-27T17:00:00Z\n24852\tBanana\t1\t2026-09-27T17:00:01Z\n13176\tBag of Organic Bananas\t1\t2026-09-27T17:00:02Z" \| python3 mapreduce/mapper.py \| sort \| python3 mapreduce/reducer.py` should output `13176\t1\n24852\t2`                                                                    |
+| **Working afterward** | MapReduce logic is verified locally                                                                                                                                                                                                                                                                                             |
+| **Common failures**   | Tab vs space issues. Python shebang. Encoding. Missing `#!/usr/bin/env python3`.                                                                                                                                                                                                                                                |
 
 ### Stage 5: HDFS Integration + MapReduce on Hadoop
 
-| Property | Detail |
-|---|---|
-| **Objective** | Upload test data and mapper/reducer to HDFS, run MapReduce on Hadoop |
-| **Files to create** | `scripts/setup_hdfs.sh`, `scripts/run_mapreduce.sh` |
-| **Tasks** | 1. Create `setup_hdfs.sh`: creates HDFS dirs, uploads mapper/reducer 2. Upload synthetic test data to HDFS 3. Run Hadoop Streaming job 4. Read output from HDFS 5. Verify output matches local test |
-| **Expected output** | MapReduce job completes on Hadoop. Output in HDFS matches expected. |
-| **Verification** | `docker exec bda-hadoop hdfs dfs -cat /bda-project/output/test/part-00000` shows correct counts |
-| **Working afterward** | End-to-end MapReduce pipeline works on Hadoop |
-| **Common failures** | Hadoop Streaming JAR path. Python not available in Hadoop container (may need to install). HDFS permissions. Output directory already exists (MR fails if output dir exists). |
+| Property              | Detail                                                                                                                                                                                              |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Objective**         | Upload test data and mapper/reducer to HDFS, run MapReduce on Hadoop                                                                                                                                |
+| **Files to create**   | `scripts/setup_hdfs.sh`, `scripts/run_mapreduce.sh`                                                                                                                                                 |
+| **Tasks**             | 1. Create `setup_hdfs.sh`: creates HDFS dirs, uploads mapper/reducer 2. Upload synthetic test data to HDFS 3. Run Hadoop Streaming job 4. Read output from HDFS 5. Verify output matches local test |
+| **Expected output**   | MapReduce job completes on Hadoop. Output in HDFS matches expected.                                                                                                                                 |
+| **Verification**      | `docker exec bda-hadoop hdfs dfs -cat /bda-project/output/test/part-00000` shows correct counts                                                                                                     |
+| **Working afterward** | End-to-end MapReduce pipeline works on Hadoop                                                                                                                                                       |
+| **Common failures**   | Hadoop Streaming JAR path. Python not available in Hadoop container (may need to install). HDFS permissions. Output directory already exists (MR fails if output dir exists).                       |
 
 > [!WARNING]
 > The `apache/hadoop:3.3.6` Docker image may not have Python installed. If so, the Hadoop Streaming job cannot run Python mappers/reducers. **Mitigation:** Either install Python in the container via a Dockerfile, or use the `docker exec` approach where the consumer runs the MapReduce command from outside the container. **The implementer must verify this early.**
 
 ### Stage 6: Kafka Producer
 
-| Property | Detail |
-|---|---|
-| **Objective** | Create the Python producer that reads Instacart data and streams to Kafka |
-| **Files to create** | `producer/producer.py`, `producer/__init__.py` |
-| **Tasks** | 1. Load `products.csv` into memory (lookup dict) 2. Load `orders.csv` into memory or use chunked read for `order_hour_of_day` lookup 3. Read `order_products__prior.csv` in chunks 4. For each row: join with orders (get hour) and products (get name), create JSON message 5. Produce to Kafka with `product_id` as key 6. Rate-limit with configurable `PRODUCER_RATE` 7. Implement burst mode (watch for `state/burst_signal.json`) |
-| **Expected output** | Messages appearing in Kafka topic |
-| **Verification** | `docker exec bda-kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic sales-events --from-beginning --max-messages 5` shows JSON messages |
-| **Working afterward** | Producer streams data to Kafka |
-| **Common failures** | Memory issues loading 32M rows. Must use chunked CSV reading. Kafka connection refused (container not ready). |
+| Property              | Detail                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Objective**         | Create the Python producer that reads Instacart data and streams to Kafka                                                                                                                                                                                                                                                                                                                                                               |
+| **Files to create**   | `producer/producer.py`, `producer/__init__.py`                                                                                                                                                                                                                                                                                                                                                                                          |
+| **Tasks**             | 1. Load `products.csv` into memory (lookup dict) 2. Load `orders.csv` into memory or use chunked read for `order_hour_of_day` lookup 3. Read `order_products__prior.csv` in chunks 4. For each row: join with orders (get hour) and products (get name), create JSON message 5. Produce to Kafka with `product_id` as key 6. Rate-limit with configurable `PRODUCER_RATE` 7. Implement burst mode (watch for `state/burst_signal.json`) |
+| **Expected output**   | Messages appearing in Kafka topic                                                                                                                                                                                                                                                                                                                                                                                                       |
+| **Verification**      | `docker exec bda-kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic sales-events --from-beginning --max-messages 5` shows JSON messages                                                                                                                                                                                                                                                           |
+| **Working afterward** | Producer streams data to Kafka                                                                                                                                                                                                                                                                                                                                                                                                          |
+| **Common failures**   | Memory issues loading 32M rows. Must use chunked CSV reading. Kafka connection refused (container not ready).                                                                                                                                                                                                                                                                                                                           |
 
 > [!IMPORTANT]
 > **Memory management:** `order_products__prior.csv` is 578 MB. Do NOT load it entirely into memory. Use `pandas.read_csv(..., chunksize=10000)` or Python's `csv.reader` line-by-line. `orders.csv` (109 MB / 3.4M rows) and `products.csv` (2.2 MB / 50K rows) CAN be loaded into memory as lookup dicts.
 
-### Stage 7: Kafka Consumer + Orchestrator
+### Stage 7: Kafka Consumer + Orchestrator — ✅ COMPLETE
 
-| Property | Detail |
-|---|---|
-| **Objective** | Create the consumer that reads from Kafka, writes to HDFS, and triggers MapReduce |
-| **Files to create** | `consumer/consumer.py`, `consumer/__init__.py` |
-| **Tasks** | 1. Connect to Kafka, subscribe to `sales-events` 2. Accumulate messages in a list for the current window 3. On window boundary (WINDOW_SIZE elapsed): a. Write accumulated messages as TSV to HDFS b. Trigger MapReduce via `scripts/run_mapreduce.sh` c. Wait for MapReduce to complete d. Invoke ranking engine e. Reset buffer for next window 4. Handle empty windows gracefully |
-| **Expected output** | HDFS files appearing per window. MapReduce jobs completing. |
-| **Verification** | `docker exec bda-hadoop hdfs dfs -ls /bda-project/windows/` shows window files. `docker exec bda-hadoop hdfs dfs -ls /bda-project/output/` shows MR output dirs. |
-| **Working afterward** | Consumer → HDFS → MapReduce pipeline runs automatically per window |
-| **Common failures** | HDFS command execution from local machine (need `docker exec`). MapReduce job timeout. Window timing issues. |
+| Property              | Detail                                                                                                                                                                                                                                                                                                                                                                               |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Objective**         | Create the consumer that reads from Kafka, writes to HDFS, and triggers MapReduce                                                                                                                                                                                                                                                                                                    |
+| **Files created**     | `consumer/consumer.py`, `consumer/__init__.py` (updated), `tests/test_consumer.py`                                                                                                                                                                                                                                                                                                  |
+| **Tasks completed**   | 1. `WindowOrchestrator` connects to Kafka (`sales-events`, group `ranking-engine-group`, `auto_offset_reset=earliest`) 2. Deserialises JSON events via `parse_message()` — malformed messages are safely skipped 3. Assigns events to tumbling windows using `window_id_for_time()` with configurable `WINDOW_SIZE` 4. On window boundary: writes TSV to HDFS `/bda-project/windows/window_<ts>.tsv`, invokes `scripts/run_mapreduce.sh`, MapReduce output lands at `/bda-project/output/window_<ts>/` 5. Failed MapReduce returns non-zero → detected and logged as error, window not counted 6. Final (incomplete) window flushed on SIGINT/SIGTERM 7. Empty windows skipped gracefully |
+| **Expected output**   | HDFS files appearing per window. MapReduce jobs completing.                                                                                                                                                                                                                                                                                                                          |
+| **Verification**      | `docker exec bda-hadoop hdfs dfs -ls /bda-project/windows/` shows window files. `docker exec bda-hadoop hdfs dfs -ls /bda-project/output/` shows MR output dirs.                                                                                                                                                                                                                     |
+| **Tests**             | `tests/test_consumer.py` — 40 new tests (58 total in suite). Covers window assignment, boundary crossing, TSV helpers, parse_message (valid/malformed/null/missing-fields), HDFS path format, MR failure detection, HDFS-failure→MR-skip, bounded integration via mock KafkaConsumer. All 58 tests pass.                                                                             |
+| **Working afterward** | Consumer → HDFS → MapReduce pipeline runs automatically per window                                                                                                                                                                                                                                                                                                                   |
+| **Common failures**   | HDFS command execution from local machine (need `docker exec`). MapReduce job timeout. Window timing issues.                                                                                                                                                                                                                                                                         |
 
-### Stage 8: Ranking + Momentum Engine
+### Stage 8: Ranking + Momentum Engine — ✅ COMPLETE
 
-| Property | Detail |
-|---|---|
-| **Objective** | Create the ranking engine that processes MapReduce output into ranking JSON |
-| **Files to create** | `engine/ranking.py`, `engine/__init__.py` |
-| **Tasks** | 1. Read current window's MR output from HDFS 2. Read previous window's MR output (from state file) 3. Update cumulative totals 4. Compute momentum for each product 5. Generate top-10 by total units 6. Generate top-5 momentum movers 7. Write `state/ranking_output.json` 8. Write `state/ranking_state.json` (for persistence) |
-| **Expected output** | `ranking_output.json` with correct top-10 and momentum data |
-| **Verification** | `cat state/ranking_output.json \| python3 -m json.tool` shows valid ranking data |
-| **Working afterward** | Full data pipeline: Kafka → HDFS → MapReduce → Ranking JSON |
-| **Common failures** | State file corruption. Product name lookup failures. Division by zero (should be handled). |
+| Property              | Detail                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Objective**         | Create the ranking engine that processes MapReduce output into ranking JSON                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **Files created**     | `engine/ranking.py`, `tests/test_ranking.py`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **Tasks completed**   | 1. `parse_mr_output()` parses TSV reducer output (`product_id\ttotal_units`) into a dict, skipping malformed lines safely. 2. `compute_momentum(current, previous)` implements the exact spec formula: `((current − previous) / max(previous, 1)) * 100`, rounded to 1 dp; special-cases both-zero to 0.0. 3. `RankingEngine._load_state()` restores cumulative totals, previous-window, and product names from `state/ranking_state.json` on startup. 4. `process_window()` rotates previous→current, updates cumulative totals, builds Top-10 (cumulative desc, tie-break product_id asc) and Top-5 momentum movers (momentum_pct desc, only current>0, tie-break product_id asc). 5. Both output files written atomically (temp-file rename) so FastAPI never reads a partial file. 6. `read_hdfs_file()` reads MR output via local `hdfs dfs -cat` or `docker exec` fallback. 7. CLI: `python -m engine.ranking <window_id>` processes one window end-to-end. |
+| **Expected output**   | `ranking_output.json` with correct top-10 and momentum data                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **Verification**      | Two-window end-to-end test using architecture_spec.md §18 data (Apple=3/1, Banana=2/4, Cherry=1/0): cumulative Banana=6, Apple=4, Cherry=1; momentum Apple=−66.7%, Banana=+100%, Cherry=−100%; Top movers = Banana. All verified by `TestTwoWindowVerification`. |
+| **Tests**             | `tests/test_ranking.py` — 78 new tests (136 total in suite). Covers: `compute_momentum` (growth, decline, steady, prev=0, both=0, disappeared, large burst, rounding); `parse_mr_output` (valid, empty, malformed, non-integer, extra tabs); `build_top10` (ordering, tie-breaking, max 10, missing products, momentum per product, unknown name fallback); `build_top5_momentum_movers` (selection, ordering, tie-breaking, max 5, all-zero exclusion, non-top10 products); `RankingEngine.process_window` (single window, two windows, cumulative sum, previous rotation, name caching, absent-product momentum, output schema); state persistence (load/save, reload, corrupted file, missing file); atomic write (content, overwrite, no tmp leftover, parent dir creation); two-window end-to-end verification. All 136 tests pass. |
+| **Working afterward** | Full data pipeline: Kafka → HDFS → MapReduce → Ranking JSON                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **Common failures**   | State file corruption (handled: fresh start). Product name lookup failures (handled: fallback name). Division by zero (handled: max(prev, 1) + both-zero special case).                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 
 ### Stage 9: FastAPI Backend
 
-| Property | Detail |
-|---|---|
-| **Objective** | Create FastAPI server that serves ranking data |
-| **Files to create** | `api/main.py`, `api/__init__.py` |
-| **Tasks** | 1. `GET /api/health` endpoint 2. `GET /api/rankings` reads and returns `ranking_output.json` 3. `POST /api/burst` writes `burst_signal.json` 4. CORS middleware for React dev server 5. Error handling for missing ranking file |
-| **Expected output** | API responds with ranking data |
-| **Verification** | `curl http://localhost:8000/api/health` returns OK. `curl http://localhost:8000/api/rankings` returns ranking JSON. |
-| **Working afterward** | REST API serves ranking data |
-| **Common failures** | CORS issues. File not found on first run (no ranking yet). JSON parsing errors. |
+| Property              | Detail                                                                                                                                                                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Objective**         | Create FastAPI server that serves ranking data                                                                                                                                                                                  |
+| **Files to create**   | `api/main.py`, `api/__init__.py`                                                                                                                                                                                                |
+| **Tasks**             | 1. `GET /api/health` endpoint 2. `GET /api/rankings` reads and returns `ranking_output.json` 3. `POST /api/burst` writes `burst_signal.json` 4. CORS middleware for React dev server 5. Error handling for missing ranking file |
+| **Expected output**   | API responds with ranking data                                                                                                                                                                                                  |
+| **Verification**      | `curl http://localhost:8000/api/health` returns OK. `curl http://localhost:8000/api/rankings` returns ranking JSON.                                                                                                             |
+| **Working afterward** | REST API serves ranking data                                                                                                                                                                                                    |
+| **Common failures**   | CORS issues. File not found on first run (no ranking yet). JSON parsing errors.                                                                                                                                                 |
 
 ### Stage 10: React Dashboard
 
-| Property | Detail |
-|---|---|
-| **Objective** | Create React dashboard that displays rankings |
-| **Files to create** | `frontend/` (Vite + React project) |
-| **Tasks** | 1. `cd frontend && npx -y create-vite@latest ./ --template react` 2. Create `RankingTable` component 3. Create `MomentumMovers` component 4. Create `StatusBar` component 5. Create `BurstControl` component 6. Implement polling logic 7. Implement dark theme styling 8. Add momentum indicators (▲/▼, color coding) |
-| **Expected output** | Dashboard displays top-10 and updates automatically |
-| **Verification** | Open `http://localhost:5173` in browser. Rankings update when pipeline runs. |
-| **Working afterward** | Complete end-to-end: Dataset → Kafka → HDFS → MapReduce → Ranking → API → Dashboard |
-| **Common failures** | CORS errors. API URL configuration. CSS layout issues. |
+| Property              | Detail                                                                                                                                                                                                                                                                                                                 |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Objective**         | Create React dashboard that displays rankings                                                                                                                                                                                                                                                                          |
+| **Files to create**   | `frontend/` (Vite + React project)                                                                                                                                                                                                                                                                                     |
+| **Tasks**             | 1. `cd frontend && npx -y create-vite@latest ./ --template react` 2. Create `RankingTable` component 3. Create `MomentumMovers` component 4. Create `StatusBar` component 5. Create `BurstControl` component 6. Implement polling logic 7. Implement dark theme styling 8. Add momentum indicators (▲/▼, color coding) |
+| **Expected output**   | Dashboard displays top-10 and updates automatically                                                                                                                                                                                                                                                                    |
+| **Verification**      | Open `http://localhost:5173` in browser. Rankings update when pipeline runs.                                                                                                                                                                                                                                           |
+| **Working afterward** | Complete end-to-end: Dataset → Kafka → HDFS → MapReduce → Ranking → API → Dashboard                                                                                                                                                                                                                                    |
+| **Common failures**   | CORS errors. API URL configuration. CSS layout issues.                                                                                                                                                                                                                                                                 |
 
 ### Stage 11: Integration Testing
 
-| Property | Detail |
-|---|---|
-| **Objective** | Verify end-to-end pipeline works correctly |
-| **Files to create** | `tests/test_integration.py`, `scripts/start_all.sh` |
-| **Tasks** | 1. Start all infrastructure (Docker) 2. Start all services 3. Verify messages flow through Kafka 4. Verify HDFS files are created 5. Verify MapReduce produces correct output 6. Verify ranking JSON is correct 7. Verify API returns data 8. Verify dashboard displays data 9. Test burst mode 10. Test window transitions |
-| **Expected output** | All integration tests pass |
-| **Verification** | `python3 -m pytest tests/test_integration.py -v` |
-| **Working afterward** | Complete pipeline is verified end-to-end |
-| **Common failures** | Timing issues between components. Stale state from previous runs. |
+| Property              | Detail                                                                                                                                                                                                                                                                                                                      |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Objective**         | Verify end-to-end pipeline works correctly                                                                                                                                                                                                                                                                                  |
+| **Files to create**   | `tests/test_integration.py`, `scripts/start_all.sh`                                                                                                                                                                                                                                                                         |
+| **Tasks**             | 1. Start all infrastructure (Docker) 2. Start all services 3. Verify messages flow through Kafka 4. Verify HDFS files are created 5. Verify MapReduce produces correct output 6. Verify ranking JSON is correct 7. Verify API returns data 8. Verify dashboard displays data 9. Test burst mode 10. Test window transitions |
+| **Expected output**   | All integration tests pass                                                                                                                                                                                                                                                                                                  |
+| **Verification**      | `python3 -m pytest tests/test_integration.py -v`                                                                                                                                                                                                                                                                            |
+| **Working afterward** | Complete pipeline is verified end-to-end                                                                                                                                                                                                                                                                                    |
+| **Common failures**   | Timing issues between components. Stale state from previous runs.                                                                                                                                                                                                                                                           |
 
 ### Stage 12: Demo Preparation
 
-| Property | Detail |
-|---|---|
-| **Objective** | Prepare for college demonstration |
-| **Files to create** | `scripts/start_all.sh`, `scripts/demo_burst.sh`, `.env.demo` |
-| **Tasks** | 1. Create startup script that launches everything in order 2. Create `.env.demo` with production window sizes 3. Test burst mode end-to-end 4. Prepare terminal layout 5. Rehearse demo flow 6. Document demo steps in README |
-| **Expected output** | Demo runs smoothly from start to finish |
-| **Verification** | Complete demo run-through with `.env.demo` configuration |
-| **Working afterward** | Project is demo-ready |
-| **Common failures** | Docker containers not starting. Stale state from previous runs. HDFS output directory already exists. |
+| Property              | Detail                                                                                                                                                                                                                        |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Objective**         | Prepare for college demonstration                                                                                                                                                                                             |
+| **Files to create**   | `scripts/start_all.sh`, `scripts/demo_burst.sh`, `.env.demo`                                                                                                                                                                  |
+| **Tasks**             | 1. Create startup script that launches everything in order 2. Create `.env.demo` with production window sizes 3. Test burst mode end-to-end 4. Prepare terminal layout 5. Rehearse demo flow 6. Document demo steps in README |
+| **Expected output**   | Demo runs smoothly from start to finish                                                                                                                                                                                       |
+| **Verification**      | Complete demo run-through with `.env.demo` configuration                                                                                                                                                                      |
+| **Working afterward** | Project is demo-ready                                                                                                                                                                                                         |
+| **Common failures**   | Docker containers not starting. Stale state from previous runs. HDFS output directory already exists.                                                                                                                         |
 
 ---
 
@@ -1200,20 +1218,21 @@ Window 1 (previous): Apple=3, Banana=2, Cherry=1
 Window 2 (current): Apple=1, Banana=4, Cherry=0
 
 Expected results after Window 2:
+
 - Cumulative: Apple=4, Banana=6, Cherry=1
-- Momentum: Apple=(1-3)/3*100=-66.7%, Banana=(4-2)/2*100=100%, Cherry=(0-1)/1*100=-100%
+- Momentum: Apple=(1-3)/3*100=-66.7%, Banana=(4-2)/2*100=100%, Cherry=(0-1)/1\*100=-100%
 - Top 3 by total: Banana(6), Apple(4), Cherry(1)
 - Top momentum: Banana(+100%)
 
 ### Unit Tests
 
-| Test | File | What it verifies |
-|---|---|---|
-| Mapper | `tests/test_mapper.py` | Reads TSV input, emits correct `product_id\tunits` output. Handles malformed lines. |
-| Reducer | `tests/test_reducer.py` | Sums units per product_id correctly. Handles single-product and multi-product input. |
+| Test     | File                     | What it verifies                                                                                                                        |
+| -------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Mapper   | `tests/test_mapper.py`   | Reads TSV input, emits correct `product_id\tunits` output. Handles malformed lines.                                                     |
+| Reducer  | `tests/test_reducer.py`  | Sums units per product_id correctly. Handles single-product and multi-product input.                                                    |
 | Momentum | `tests/test_momentum.py` | `compute_momentum(20, 10)` = +100%. `compute_momentum(0, 0)` = 0%. `compute_momentum(5, 0)` = +500%. `compute_momentum(0, 10)` = -100%. |
-| Ranking | `tests/test_ranking.py` | Top-10 selection. Correct sorting. Momentum computation for each product. State persistence. |
-| FastAPI | `tests/test_api.py` | `/api/health` returns 200. `/api/rankings` returns valid schema. CORS headers present. |
+| Ranking  | `tests/test_ranking.py`  | Top-10 selection. Correct sorting. Momentum computation for each product. State persistence.                                            |
+| FastAPI  | `tests/test_api.py`      | `/api/health` returns 200. `/api/rankings` returns valid schema. CORS headers present.                                                  |
 
 ### Testing the Mapper/Reducer Locally
 
@@ -1222,7 +1241,7 @@ Expected results after Window 2:
 echo -e "24852\tBanana\t1\t2026-09-27T17:00:00Z" | python3 mapreduce/mapper.py
 # Expected: 24852	1
 
-# reducer test  
+# reducer test
 echo -e "24852\t1\n24852\t1\n24852\t1" | python3 mapreduce/reducer.py
 # Expected: 24852	3
 
@@ -1236,14 +1255,14 @@ cat tests/test_data/synthetic_transactions.tsv | python3 mapreduce/mapper.py | s
 
 ### Edge Cases to Test
 
-| Case | Input | Expected |
-|---|---|---|
-| Empty window | No messages in window | No MR job. Previous ranking maintained. |
-| Single product | Only product_id=100 in window | Top-10 has 1 entry. |
-| Burst effect | Product 300 goes from 1 to 50 units | Momentum = +4900% (capped at display) |
-| Division by zero | Previous=0, Current=5 | Momentum = +500% (denominator = max(0,1) = 1) |
-| All zeros | Previous=0, Current=0 | Momentum = 0% |
-| Malformed input | Non-numeric units | Mapper skips the line |
+| Case             | Input                               | Expected                                      |
+| ---------------- | ----------------------------------- | --------------------------------------------- |
+| Empty window     | No messages in window               | No MR job. Previous ranking maintained.       |
+| Single product   | Only product_id=100 in window       | Top-10 has 1 entry.                           |
+| Burst effect     | Product 300 goes from 1 to 50 units | Momentum = +4900% (capped at display)         |
+| Division by zero | Previous=0, Current=5               | Momentum = +500% (denominator = max(0,1) = 1) |
+| All zeros        | Previous=0, Current=0               | Momentum = 0%                                 |
+| Malformed input  | Non-numeric units                   | Mapper skips the line                         |
 
 ---
 
@@ -1262,36 +1281,36 @@ bash scripts/setup_hdfs.sh
 
 #### Terminal Layout (4 terminals)
 
-| Terminal | Purpose | Command |
-|---|---|---|
-| **T1** (top-left) | Kafka Producer | `python -m producer.producer` |
-| **T2** (top-right) | Kafka Consumer + Pipeline | `python -m consumer.consumer` |
-| **T3** (bottom-left) | FastAPI | `uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload` |
-| **T4** (bottom-right) | Monitoring / HDFS checks | (manual commands) |
-| **Browser** | React Dashboard | `http://localhost:5173` |
+| Terminal              | Purpose                   | Command                                                    |
+| --------------------- | ------------------------- | ---------------------------------------------------------- |
+| **T1** (top-left)     | Kafka Producer            | `python -m producer.producer`                              |
+| **T2** (top-right)    | Kafka Consumer + Pipeline | `python -m consumer.consumer`                              |
+| **T3** (bottom-left)  | FastAPI                   | `uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload` |
+| **T4** (bottom-right) | Monitoring / HDFS checks  | (manual commands)                                          |
+| **Browser**           | React Dashboard           | `http://localhost:5173`                                    |
 
 #### Demo Script
 
-| Time | Action | What audience sees | What to explain |
-|---|---|---|---|
-| 0:00 | Show Docker containers running | `docker compose ps` — Kafka + Hadoop healthy | "We have Kafka for message streaming and Hadoop for distributed storage and processing." |
-| 0:30 | Start FastAPI (T3) | Server starts on port 8000 | "FastAPI serves our ranking data as a REST API." |
-| 1:00 | Open React dashboard in browser | Empty dashboard, waiting for data | "React polls the API every 5 seconds." |
-| 1:30 | Start Consumer (T2) | Consumer connects to Kafka, waiting for messages | "The consumer reads from Kafka, writes to HDFS, and triggers MapReduce." |
-| 2:00 | Start Producer (T1) | Messages flowing, producer logs showing rate | "The producer simulates a live transaction stream from the Instacart dataset." |
-| 2:30 | Show Kafka messages (T4) | `kafka-console-consumer` shows JSON messages | "Real Kafka messages. Each is a product purchase event." |
-| 3:00 | Wait for first window to complete | Consumer logs: "Window complete. Writing to HDFS..." | "After 60 seconds (dev mode), the consumer flushes to HDFS." |
-| 3:30 | Show HDFS files (T4) | `hdfs dfs -ls /bda-project/windows/` shows file | "Data is stored in HDFS, Hadoop's distributed filesystem." |
-| 4:00 | MapReduce job runs | Consumer logs: "MapReduce job started..." then "completed" | "Hadoop MapReduce aggregates units sold per product." |
-| 4:30 | Show MapReduce output (T4) | `hdfs dfs -cat /bda-project/output/window_.../part-00000` | "MapReduce output: each product and its unit count." |
-| 5:00 | Dashboard updates | Top-10 products appear with Banana at #1 | "The ranking refreshes automatically. Banana is #1 — consistent with Instacart data." |
-| 5:30 | Wait for second window | Dashboard updates again. Momentum column shows values. | "Now we have two windows, so momentum is calculated." |
-| 6:00 | **Trigger sales burst** | Click "Burst" button in dashboard for product "Organic Hass Avocado" | "Let's simulate a sudden surge in avocado purchases." |
-| 7:00 | Next window completes | Avocado's current_window_units spike. Momentum shows +500% or similar. | "Notice the momentum column — avocado is surging." |
-| 7:30 | Show momentum movers | Avocado appears in momentum movers section | "The system detects rapidly changing products even if they're not #1 overall." |
-| 8:00 | Show HDFS data growth (T4) | `hdfs dfs -ls /bda-project/windows/` shows multiple files | "HDFS retains windowed data for analysis." |
-| 8:30 | Show API directly | `curl localhost:8000/api/rankings \| python3 -m json.tool` | "The FastAPI endpoint returns structured JSON." |
-| 9:00 | Wrap up | Stop producer. Show final ranking. | "This system gives merchandising teams real-time visibility into product momentum." |
+| Time | Action                            | What audience sees                                                     | What to explain                                                                          |
+| ---- | --------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| 0:00 | Show Docker containers running    | `docker compose ps` — Kafka + Hadoop healthy                           | "We have Kafka for message streaming and Hadoop for distributed storage and processing." |
+| 0:30 | Start FastAPI (T3)                | Server starts on port 8000                                             | "FastAPI serves our ranking data as a REST API."                                         |
+| 1:00 | Open React dashboard in browser   | Empty dashboard, waiting for data                                      | "React polls the API every 5 seconds."                                                   |
+| 1:30 | Start Consumer (T2)               | Consumer connects to Kafka, waiting for messages                       | "The consumer reads from Kafka, writes to HDFS, and triggers MapReduce."                 |
+| 2:00 | Start Producer (T1)               | Messages flowing, producer logs showing rate                           | "The producer simulates a live transaction stream from the Instacart dataset."           |
+| 2:30 | Show Kafka messages (T4)          | `kafka-console-consumer` shows JSON messages                           | "Real Kafka messages. Each is a product purchase event."                                 |
+| 3:00 | Wait for first window to complete | Consumer logs: "Window complete. Writing to HDFS..."                   | "After 60 seconds (dev mode), the consumer flushes to HDFS."                             |
+| 3:30 | Show HDFS files (T4)              | `hdfs dfs -ls /bda-project/windows/` shows file                        | "Data is stored in HDFS, Hadoop's distributed filesystem."                               |
+| 4:00 | MapReduce job runs                | Consumer logs: "MapReduce job started..." then "completed"             | "Hadoop MapReduce aggregates units sold per product."                                    |
+| 4:30 | Show MapReduce output (T4)        | `hdfs dfs -cat /bda-project/output/window_.../part-00000`              | "MapReduce output: each product and its unit count."                                     |
+| 5:00 | Dashboard updates                 | Top-10 products appear with Banana at #1                               | "The ranking refreshes automatically. Banana is #1 — consistent with Instacart data."    |
+| 5:30 | Wait for second window            | Dashboard updates again. Momentum column shows values.                 | "Now we have two windows, so momentum is calculated."                                    |
+| 6:00 | **Trigger sales burst**           | Click "Burst" button in dashboard for product "Organic Hass Avocado"   | "Let's simulate a sudden surge in avocado purchases."                                    |
+| 7:00 | Next window completes             | Avocado's current_window_units spike. Momentum shows +500% or similar. | "Notice the momentum column — avocado is surging."                                       |
+| 7:30 | Show momentum movers              | Avocado appears in momentum movers section                             | "The system detects rapidly changing products even if they're not #1 overall."           |
+| 8:00 | Show HDFS data growth (T4)        | `hdfs dfs -ls /bda-project/windows/` shows multiple files              | "HDFS retains windowed data for analysis."                                               |
+| 8:30 | Show API directly                 | `curl localhost:8000/api/rankings \| python3 -m json.tool`             | "The FastAPI endpoint returns structured JSON."                                          |
+| 9:00 | Wrap up                           | Stop producer. Show final ranking.                                     | "This system gives merchandising teams real-time visibility into product momentum."      |
 
 #### Key Points to Emphasize During Demo
 
@@ -1305,21 +1324,21 @@ bash scripts/setup_hdfs.sh
 
 ## 20. Risks and Fallbacks
 
-| # | Risk | Impact | Mitigation | Fallback |
-|---|---|---|---|---|
-| 1 | **Hadoop container has no Python** | MapReduce cannot run Python mapper/reducer | Check image on Day 1. If missing, create a Dockerfile that extends `apache/hadoop:3.3.6` and installs Python. | Use a custom Dockerfile: `FROM apache/hadoop:3.3.6` + `RUN apt-get install -y python3` |
-| 2 | **Hadoop container startup fails** | HDFS/YARN not available | The `apache/hadoop:3.3.6` image may need specific env vars. Check official docs. Try the image's default entrypoint first. | Use a known-working Hadoop Docker setup (e.g., `sequenceiq/hadoop-docker` or `bde2020/hadoop-namenode`). |
-| 3 | **32M rows too large for producer** | Out-of-memory error | Use chunked CSV reading (`chunksize=10000`). Never load full file into memory. | Use only the first 500K rows. This is still 10x larger than Amazon and sufficient for demo. |
-| 4 | **HDFS commands from host** | `hdfs dfs` not installed on host machine | Use `docker exec bda-hadoop hdfs dfs ...` from the consumer. | All HDFS operations go through `docker exec`. |
-| 5 | **MapReduce output dir exists** | Hadoop fails if output directory already exists | Delete output directory before each MR job: `hdfs dfs -rm -r /bda-project/output/window_<ts>` | Always clean output dir in `run_mapreduce.sh` before launching job. |
-| 6 | **Kafka connection refused** | Producer/consumer can't connect | Wait for Kafka health check. Implement retry logic with backoff. | Add 30-second sleep and retry in producer/consumer startup. |
-| 7 | **Port conflicts** | Services can't bind | Document required ports. Check with `lsof -i :9092` before starting. | Use alternate ports in docker-compose.yml. |
-| 8 | **Window timing issues** | Windows are inconsistent size | Use wall-clock time, not message count. | Timer-based windows are more reliable than count-based. |
-| 9 | **No data in first window** | Empty ranking on startup | Rank shows "No data yet" instead of empty table. | Default state with empty arrays. Dashboard handles gracefully. |
-| 10 | **Historical data ≠ real-time** | Viva question: "Is this real-time?" | Honest answer: "The Kafka/HDFS/MapReduce infrastructure is real. The data source is a historical simulation." | Always have `"source": "historical_simulation"` in Kafka messages. |
-| 11 | **Laptop resource limits** | Docker + Kafka + Hadoop + Python processes | Kafka: ~256MB. Hadoop: ~512MB. Total Docker ~1GB. Acceptable for 8GB+ laptop. | Reduce Kafka heap, reduce YARN memory. |
-| 12 | **orders.csv join performance** | 3.4M rows × 32M rows join is expensive | Pre-build an `order_id → order_hour_of_day` lookup dict from orders.csv (~3.4M entries, ~150MB in memory). This is feasible. | Sample orders.csv if memory is an issue. |
-| 13 | **Stale state between runs** | Old ranking_state.json causes wrong results | Clear `state/` directory on fresh start. Add `--fresh` flag to consumer. | `scripts/cleanup.sh` clears all state. |
+| #   | Risk                                | Impact                                          | Mitigation                                                                                                                   | Fallback                                                                                                 |
+| --- | ----------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| 1   | **Hadoop container has no Python**  | MapReduce cannot run Python mapper/reducer      | Check image on Day 1. If missing, create a Dockerfile that extends `apache/hadoop:3.3.6` and installs Python.                | Use a custom Dockerfile: `FROM apache/hadoop:3.3.6` + `RUN apt-get install -y python3`                   |
+| 2   | **Hadoop container startup fails**  | HDFS/YARN not available                         | The `apache/hadoop:3.3.6` image may need specific env vars. Check official docs. Try the image's default entrypoint first.   | Use a known-working Hadoop Docker setup (e.g., `sequenceiq/hadoop-docker` or `bde2020/hadoop-namenode`). |
+| 3   | **32M rows too large for producer** | Out-of-memory error                             | Use chunked CSV reading (`chunksize=10000`). Never load full file into memory.                                               | Use only the first 500K rows. This is still 10x larger than Amazon and sufficient for demo.              |
+| 4   | **HDFS commands from host**         | `hdfs dfs` not installed on host machine        | Use `docker exec bda-hadoop hdfs dfs ...` from the consumer.                                                                 | All HDFS operations go through `docker exec`.                                                            |
+| 5   | **MapReduce output dir exists**     | Hadoop fails if output directory already exists | Delete output directory before each MR job: `hdfs dfs -rm -r /bda-project/output/window_<ts>`                                | Always clean output dir in `run_mapreduce.sh` before launching job.                                      |
+| 6   | **Kafka connection refused**        | Producer/consumer can't connect                 | Wait for Kafka health check. Implement retry logic with backoff.                                                             | Add 30-second sleep and retry in producer/consumer startup.                                              |
+| 7   | **Port conflicts**                  | Services can't bind                             | Document required ports. Check with `lsof -i :9092` before starting.                                                         | Use alternate ports in docker-compose.yml.                                                               |
+| 8   | **Window timing issues**            | Windows are inconsistent size                   | Use wall-clock time, not message count.                                                                                      | Timer-based windows are more reliable than count-based.                                                  |
+| 9   | **No data in first window**         | Empty ranking on startup                        | Rank shows "No data yet" instead of empty table.                                                                             | Default state with empty arrays. Dashboard handles gracefully.                                           |
+| 10  | **Historical data ≠ real-time**     | Viva question: "Is this real-time?"             | Honest answer: "The Kafka/HDFS/MapReduce infrastructure is real. The data source is a historical simulation."                | Always have `"source": "historical_simulation"` in Kafka messages.                                       |
+| 11  | **Laptop resource limits**          | Docker + Kafka + Hadoop + Python processes      | Kafka: ~256MB. Hadoop: ~512MB. Total Docker ~1GB. Acceptable for 8GB+ laptop.                                                | Reduce Kafka heap, reduce YARN memory.                                                                   |
+| 12  | **orders.csv join performance**     | 3.4M rows × 32M rows join is expensive          | Pre-build an `order_id → order_hour_of_day` lookup dict from orders.csv (~3.4M entries, ~150MB in memory). This is feasible. | Sample orders.csv if memory is an issue.                                                                 |
+| 13  | **Stale state between runs**        | Old ranking_state.json causes wrong results     | Clear `state/` directory on fresh start. Add `--fresh` flag to consumer.                                                     | `scripts/cleanup.sh` clears all state.                                                                   |
 
 ---
 
@@ -1352,8 +1371,8 @@ The implementing model (Gemini 3.6 Flash Medium) should verify each of these bef
 - [x] **HDFS operations:** Via `docker exec bda-hadoop hdfs dfs ...`
 - [x] **Kafka messages:** JSON, key=product_id string, value=JSON object
 - [x] **Window size:** Configurable. Dev=60s, Demo=600s.
-- [ ] **Ranking output:** JSON file read by FastAPI. Not a database.
-- [ ] **State management:** Local JSON files in `state/` directory.
+- [x] **Ranking output:** JSON file read by FastAPI. Not a database.
+- [x] **State management:** Local JSON files in `state/` directory.
 - [ ] **Frontend:** React + Vite. Polls `GET /api/rankings` every 5 seconds.
 - [x] **Burst mode:** Signal file mechanism. Producer watches `state/burst_signal.json`.
 - [x] **Honesty:** All Kafka messages include `"source": "historical_simulation"`.
