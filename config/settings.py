@@ -55,6 +55,8 @@ class Settings:
         # --- FastAPI ---
         self.API_HOST = os.getenv("API_HOST", "0.0.0.0")
         self.API_PORT = int(os.getenv("API_PORT", "8000"))
+        origins_str = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
+        self.CORS_ORIGINS = [o.strip() for o in origins_str.split(",") if o.strip()]
 
         # --- Derived paths ---
         self.RANKING_OUTPUT_FILE = self.STATE_DIR / "ranking_output.json"
