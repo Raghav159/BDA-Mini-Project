@@ -431,6 +431,26 @@ class WindowOrchestrator:
             )
             return
 
+        # --- 3. Process Window into Ranking JSON ---
+        try:
+            from engine.ranking import RankingEngine
+            ranking_engine = RankingEngine(
+                settings=self.settings,
+                hadoop_container=self.hadoop_container,
+                hdfs_output_base=self.hdfs_output_path,
+            )
+            product_names = {
+                str(e.get("product_id")): str(e.get("product_name"))
+                for e in events
+                if e.get("product_id") and e.get("product_name")
+            }
+            ranking_engine.process_window(window_id, product_names=product_names)
+            logger.info(f"Ranking state updated for window {window_id}")
+        except Exception as exc:
+            logger.warning(
+                f"Ranking calculation warning for window {window_id}: {exc}"
+            )
+
         self._windows_completed += 1
         logger.info(
             f"Window {window_id} complete. "

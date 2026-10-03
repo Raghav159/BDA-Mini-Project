@@ -44,11 +44,15 @@ services:
       HADOOP_CONF_DIR: /opt/hadoop/etc/hadoop
     command: >
       bash -c "
+        rm -rf /opt/hadoop/data/* &&
         hdfs namenode -format -force &&
         hdfs namenode &
+        sleep 3 &&
         hdfs datanode &
         yarn resourcemanager &
         yarn nodemanager &
+        sleep 5 &&
+        hdfs dfsadmin -safemode leave || true &&
         sleep infinity
       "
     healthcheck:
