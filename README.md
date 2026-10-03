@@ -1,70 +1,74 @@
 # BDA Mini Project — Real-Time Top-Selling Product & Intraday Momentum Ranking Engine
 
-A distributed big data pipeline that simulates real-time transaction streams from historical Instacart sales data, aggregates windowed product sales via Hadoop MapReduce, computes intraday momentum metrics, and visualizes live product rankings.
+A distributed big data analytics pipeline that simulates real-time transaction streams from historical Instacart sales data, aggregates windowed product sales via Hadoop MapReduce, computes intraday momentum velocity metrics, and visualizes live product rankings on an interactive React dashboard.
 
 ---
 
 ## 🏗 Architecture Overview
 
 ```
-Instacart Dataset -> Kafka Producer -> Kafka (sales-events) -> Consumer
-  -> HDFS Storage -> Hadoop Streaming MapReduce -> Ranking & Momentum Engine
-  -> FastAPI REST Server -> React Dashboard
+Instacart Dataset -> Kafka Producer -> Kafka (sales-events) -> Kafka Consumer (Window Orchestrator)
+  -> HDFS Storage -> Hadoop Streaming MapReduce -> Ranking & Momentum Engine (Atomic JSON)
+  -> FastAPI Serving Layer -> React + Vite Dashboard
 ```
 
-1. **Kafka Producer (`producer/`):** Reads Instacart data in memory-safe chunks, enriches sales events, and streams to Kafka topic `sales-events`.
-2. **Hadoop MapReduce (`mapreduce/`):** Python mapper & reducer running on Hadoop Streaming to count per-product units sold per window.
-3. **Configuration (`config/`):** Centralized `settings.py` reading environment variables from `.env`.
+1. **Kafka Producer (`producer/`):** Reads Instacart data incrementally, enriches sales events with metadata, and streams to Kafka topic `sales-events`. Supports rate-limiting and demo burst traffic injection.
+2. **Kafka Consumer & Window Orchestrator (`consumer/`):** Groups incoming events into tumbling time windows, serialises window events to HDFS (`/bda-project/windows/`), and triggers MapReduce.
+3. **Hadoop MapReduce (`mapreduce/`):** Python mappers & reducers running on Hadoop Streaming inside Docker (`bda-hadoop`) to count per-product units sold per window.
+4. **Ranking & Momentum Engine (`engine/`):** Processes MapReduce reducer outputs, computes cumulative totals and intraday velocity change ($((current - prev) / max(prev, 1)) \times 100$), and updates state files atomically (`state/ranking_output.json`).
+5. **FastAPI Serving Layer (`api/`):** Serves `/api/health` and `/api/rankings`, and handles demo burst trigger requests at `POST /api/burst`.
+6. **React Dashboard (`frontend/`):** Modern React + Vite dashboard displaying Top-10 cumulative products, Top-5 momentum movers, system health status, and live traffic burst trigger.
 
 ---
 
-## 🚀 Quickstart
+## 🚀 Quick Start (One Command)
 
-### 1. Requirements & Setup
-
-- **Python:** 3.11+
-- **Docker:** Engine & Compose
-- **Dependencies:** Install Python requirements:
-  ```bash
-  pip install -r requirements.txt
-  ```
-
-### 2. Start Kafka Infrastructure
-
-Start the Kafka broker container:
+To launch the complete system end-to-end with a single command:
 
 ```bash
-docker compose up -d kafka
+./run_demo.sh
 ```
 
-Create the target topic:
+*(Or: `bash scripts/start_all.sh`)*
+
+### Access Endpoints
+
+| Component | URL | Description |
+|---|---|---|
+| **React Dashboard** | [http://localhost:5173](http://localhost:5173) | Interactive Real-Time Dashboard UI |
+| **FastAPI REST API** | [http://localhost:8000](http://localhost:8000) | REST API Serving Layer |
+| **API Health Check** | [http://localhost:8000/api/health](http://localhost:8000/api/health) | System Health & Current Window ID |
+| **API Rankings JSON** | [http://localhost:8000/api/rankings](http://localhost:8000/api/rankings) | Live Top-10 and Momentum Movers Data |
+
+To cleanly terminate all running services, press `Ctrl+C` in the terminal.
+
+---
+
+## ⚡ Demo Sales Burst Trigger
+
+To simulate an intraday traffic surge for a specific product during a demo:
 
 ```bash
-docker exec bda-kafka /opt/kafka/bin/kafka-topics.sh --create --topic sales-events --partitions 3 --replication-factor 1 --bootstrap-server localhost:9092 --if-not-exists
+# Usage: bash scripts/demo_burst.sh [product_id] [multiplier] [duration_seconds]
+bash scripts/demo_burst.sh 24852 10 60
 ```
 
-### 3. Run the Kafka Producer
-
-To test the producer in bounded mode (e.g. produce 100 messages):
-
-```bash
-python -m producer.producer --max-messages 100 --rate 50
-```
-
-To run dry-run mode without sending to Kafka:
-
-```bash
-python -m producer.producer --dry-run --max-messages 50
-```
+*(You can also trigger sales bursts directly from the UI widget on the dashboard.)*
 
 ---
 
 ## 🧪 Running Tests
 
-Run unit tests via `pytest`:
+Run the full unit and integration test suite (157 tests):
 
 ```bash
-python -m pytest tests/ -v
+pytest
+```
+
+To run only integration tests:
+
+```bash
+pytest tests/test_integration.py -v
 ```
 
 ---
@@ -73,14 +77,22 @@ python -m pytest tests/ -v
 
 ```
 .
+├── api/                 # FastAPI backend server (main.py)
 ├── config/              # Centralized configuration (settings.py)
+├── consumer/            # Kafka consumer & window orchestrator (consumer.py)
 ├── datasets/            # Instacart raw CSV datasets
+├── engine/              # Ranking & momentum engine (ranking.py)
+├── frontend/            # React + Vite dashboard UI
 ├── mapreduce/           # Hadoop Streaming mapper and reducer scripts
-├── producer/            # Kafka event streaming producer
-├── state/               # Runtime state files (gitignored)
-├── tests/               # Unit and integration tests
-├── architecture_spec.md # Master project specification & checklist
-├── docker-compose.yml   # Infrastructure services configuration
-├── README.md            # Project overview and instructions
+├── producer/            # Kafka event streaming producer (producer.py)
+├── scripts/             # Helper scripts (setup_hdfs.sh, run_mapreduce.sh, demo_burst.sh, start_all.sh)
+├── state/               # Runtime state & JSON output files (gitignored)
+├── tests/               # Unit and integration test suite (157 tests)
+├── architecture_spec.md # Master project architecture & implementation spec
+├── DEMO.md              # Lab internal demonstration runbook
+├── docker-compose.yml   # Docker infrastructure setup (Kafka + Hadoop)
+├── README.md            # Main project documentation
+├── run_demo.sh          # One-command reliable startup script
 └── requirements.txt     # Python dependencies
 ```
+
