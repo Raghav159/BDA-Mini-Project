@@ -20,7 +20,7 @@ import json
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 from unittest.mock import MagicMock, patch, call
 
 import pytest
@@ -252,14 +252,18 @@ def _make_kafka_message(event: dict) -> MagicMock:
     return msg
 
 
-def _make_orchestrator(dry_run: bool = True, window_size: int = 60) -> WindowOrchestrator:
+def _make_orchestrator(
+    dry_run: bool = True,
+    window_size: int = 60,
+    consumer_timeout_ms: Optional[int] = None,
+) -> WindowOrchestrator:
     """Return an orchestrator in dry-run mode (no Kafka / HDFS needed)."""
     settings = Settings()
     orch = WindowOrchestrator(
         settings=settings,
         window_size=window_size,
         dry_run=dry_run,
-        consumer_timeout_ms=500,
+        consumer_timeout_ms=consumer_timeout_ms,
     )
     return orch
 
@@ -528,9 +532,10 @@ class TestBoundedIntegration:
     def _build_messages(self, events: List[dict]) -> List[MagicMock]:
         return [_make_kafka_message(e) for e in events]
 
+    @patch("engine.ranking.RankingEngine.process_window")
     @patch("consumer.consumer.run_mapreduce")
     @patch("consumer.consumer.hdfs_put_text")
-    def test_consume_two_windows_via_mock_consumer(self, mock_hdfs_put, mock_mr):
+    def test_consume_two_windows_via_mock_consumer(self, mock_hdfs_put, mock_mr, mock_process_window):
         """Feed two windows of messages through a mock KafkaConsumer.
 
         Window 1: 3 events at 10:00:xx UTC
@@ -565,11 +570,13 @@ class TestBoundedIntegration:
         # 2 flushes: once when boundary crossed + once in finally block
         assert mock_hdfs_put.call_count == 2
         assert mock_mr.call_count == 2
+        assert mock_process_window.call_count == 2
         assert orch._windows_completed == 2
 
+    @patch("engine.ranking.RankingEngine.process_window")
     @patch("consumer.consumer.run_mapreduce")
     @patch("consumer.consumer.hdfs_put_text")
-    def test_malformed_messages_are_skipped(self, mock_hdfs_put, mock_mr):
+    def test_malformed_messages_are_skipped(self, mock_hdfs_put, mock_mr, mock_process_window):
         """Malformed Kafka messages must not crash the consumer loop."""
         messages = [
             _make_kafka_message({"product_id": 1, "product_name": "A",
@@ -596,9 +603,10 @@ class TestBoundedIntegration:
         # The one valid event's window is flushed in the finally block
         assert mock_hdfs_put.call_count == 1
 
+    @patch("engine.ranking.RankingEngine.process_window")
     @patch("consumer.consumer.run_mapreduce")
     @patch("consumer.consumer.hdfs_put_text")
-    def test_max_windows_stops_consumer(self, mock_hdfs_put, mock_mr):
+    def test_max_windows_stops_consumer(self, mock_hdfs_put, mock_mr, mock_process_window):
         """When max_windows is set, the orchestrator stops after that count."""
         # 3 windows of events
         events = []
@@ -619,3 +627,47 @@ class TestBoundedIntegration:
 
         completed = orch.run(max_windows=2)
         assert completed == 2
+
+    @patch("engine.ranking.RankingEngine.process_window")
+    @patch("consumer.consumer.run_mapreduce")
+    @patch("consumer.consumer.hdfs_put_text")
+    def test_consumer_does_not_terminate_on_polling_timeout(self, mock_hdfs_put, mock_mr, mock_process_window):
+        """Proves consumer does not terminate merely because a polling period (StopIteration) has no message."""
+        msg = _make_kafka_message({
+            "product_id": 24852, "product_name": "Banana", "units": 1,
+            "event_time": "2026-09-29T10:00:10Z"
+        })
+
+        orch = _make_orchestrator(dry_run=False, window_size=60)
+        orch.consumer_timeout_ms = 5000
+
+        class MockConsumerIter:
+            def __init__(self):
+                self.calls = 0
+            def __iter__(self):
+                return self
+            def __next__(self):
+                self.calls += 1
+                if self.calls == 1:
+                    # Simulate polling timeout on first poll
+                    raise StopIteration()
+                elif self.calls == 2:
+                    return msg
+                else:
+                    # After processing message, signal end of mock test stream
+                    orch.consumer_timeout_ms = None
+                    raise StopIteration()
+
+        mock_iter = MockConsumerIter()
+        mock_consumer = MagicMock()
+        mock_consumer.__iter__ = MagicMock(return_value=mock_iter)
+        mock_consumer.commit = MagicMock()
+        mock_consumer.close = MagicMock()
+        orch._consumer = mock_consumer
+
+        # Run orchestrator
+        orch.run()
+
+        # Verify that the message yielded on 2nd iteration (after StopIteration timeout) was processed
+        assert mock_hdfs_put.call_count >= 1
+

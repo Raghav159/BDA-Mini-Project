@@ -238,7 +238,7 @@ class WindowOrchestrator:
         hdfs_base: Optional[str] = None,
         hadoop_container: Optional[str] = None,
         auto_offset_reset: str = "earliest",
-        consumer_timeout_ms: int = 1000,
+        consumer_timeout_ms: Optional[int] = None,
         dry_run: bool = False,
     ):
         self.settings = settings or Settings()
@@ -284,15 +284,20 @@ class WindowOrchestrator:
             f"topic={self.topic} group={self.consumer_group} "
             f"auto_offset_reset={self.auto_offset_reset}"
         )
+        consumer_kwargs = {
+            "bootstrap_servers": self.bootstrap_servers,
+            "group_id": self.consumer_group,
+            "auto_offset_reset": self.auto_offset_reset,
+            "enable_auto_commit": True,
+            "auto_commit_interval_ms": 5000,
+            "value_deserializer": lambda raw: raw,  # We do JSON parsing ourselves
+        }
+        if self.consumer_timeout_ms is not None:
+            consumer_kwargs["consumer_timeout_ms"] = self.consumer_timeout_ms
+
         self._consumer = KafkaConsumer(
             self.topic,
-            bootstrap_servers=self.bootstrap_servers,
-            group_id=self.consumer_group,
-            auto_offset_reset=self.auto_offset_reset,
-            enable_auto_commit=True,
-            auto_commit_interval_ms=5000,
-            consumer_timeout_ms=self.consumer_timeout_ms,
-            value_deserializer=lambda raw: raw,  # We do JSON parsing ourselves
+            **consumer_kwargs,
         )
         logger.info("Kafka consumer connected.")
 
@@ -496,43 +501,58 @@ class WindowOrchestrator:
         signal.signal(signal.SIGTERM, _handle_signal)
 
         try:
-            for message in self._consumer:
-                if _shutdown:
-                    break
-
-                event = self.parse_message(message.value)
-                if event is None:
-                    continue  # malformed — already logged
-
-                assigned_window = self._assign_window(event)
-                if assigned_window is None:
-                    continue  # bad event_time — already logged
-
-                if self._current_window_id is None:
-                    # First event ever — initialise the current window
-                    self._current_window_id = assigned_window
-                    logger.info(f"First window started: {assigned_window}")
-
-                if assigned_window != self._current_window_id:
-                    # Crossed a window boundary — flush the completed window
-                    self._flush_window(
-                        self._current_window_id, self._window_buffer
-                    )
-                    self._window_buffer = []
-                    self._current_window_id = assigned_window
-                    logger.info(f"New window started: {assigned_window}")
-
-                    if max_windows is not None and self._windows_completed >= max_windows:
-                        logger.info(
-                            f"Reached max_windows={max_windows}; stopping."
-                        )
+            while not _shutdown:
+                for message in self._consumer:
+                    if _shutdown:
                         break
 
-                self._window_buffer.append(event)
+                    event = self.parse_message(message.value)
+                    if event is None:
+                        continue  # malformed — already logged
 
-        except StopIteration:
-            # consumer_timeout_ms elapsed with no new messages
-            logger.info("Consumer timed out (no new messages).")
+                    assigned_window = self._assign_window(event)
+                    if assigned_window is None:
+                        continue  # bad event_time — already logged
+
+                    if self._current_window_id is None:
+                        # First event ever — initialise the current window
+                        self._current_window_id = assigned_window
+                        logger.info(f"First window started: {assigned_window}")
+
+                    if assigned_window != self._current_window_id:
+                        # Crossed a window boundary — flush the completed window
+                        self._flush_window(
+                            self._current_window_id, self._window_buffer
+                        )
+                        self._window_buffer = []
+                        self._current_window_id = assigned_window
+                        logger.info(f"New window started: {assigned_window}")
+
+                        if max_windows is not None and self._windows_completed >= max_windows:
+                            logger.info(
+                                f"Reached max_windows={max_windows}; stopping."
+                            )
+                            _shutdown = True
+                            break
+
+                    self._window_buffer.append(event)
+
+                if _shutdown or (max_windows is not None and self._windows_completed >= max_windows):
+                    break
+
+                # If the consumer is a real KafkaConsumer, the for-loop ended due to a poll timeout.
+                # Continue the while loop to keep polling Kafka.
+                if isinstance(self._consumer, KafkaConsumer):
+                    logger.debug("Consumer poll timeout occurred; continuing loop.")
+                    continue
+
+                # If consumer_timeout_ms was explicitly set (e.g. in tests), continue
+                if self.consumer_timeout_ms is not None:
+                    logger.debug("Consumer poll timeout occurred; continuing loop.")
+                    continue
+
+                # Otherwise (e.g. bounded list or mock in unit tests), a finished for-loop means the stream ended.
+                break
 
         except KafkaError as exc:
             logger.error(f"Kafka error in consumer loop: {exc}", exc_info=True)
@@ -582,8 +602,8 @@ def main() -> None:
     parser.add_argument(
         "--consumer-timeout-ms",
         type=int,
-        default=5000,
-        help="Consumer poll timeout in ms before stopping (default: 5000).",
+        default=None,
+        help="Consumer poll timeout in ms (default: None for infinite waiting).",
     )
     args = parser.parse_args()
 
