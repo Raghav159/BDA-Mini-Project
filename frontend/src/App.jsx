@@ -1,20 +1,40 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import StatusBar from './components/StatusBar';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import Header from './components/Header';
+import SummaryCards from './components/SummaryCards';
 import RankingTable from './components/RankingTable';
 import MomentumMovers from './components/MomentumMovers';
 import BurstControl from './components/BurstControl';
+import ArchitectureModal from './components/ArchitectureModal';
+import { soundFX } from './utils/audio';
 import './App.css';
 
-const POLL_INTERVAL_SECONDS = 5;
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 export default function App() {
   const [rankingData, setRankingData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
-  const [countdown, setCountdown] = useState(POLL_INTERVAL_SECONDS);
 
-  const fetchRankings = useCallback(async () => {
+  // Polling configuration
+  const [pollInterval, setPollInterval] = useState(5); // default 5 seconds
+  const [countdown, setCountdown] = useState(5);
+  const [isPaused, setIsPaused] = useState(false);
+
+  // Audio FX toggle
+  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
+
+  // Target product for burst pre-fill
+  const [burstTargetProductId, setBurstTargetProductId] = useState('');
+
+  // Architecture modal
+  const [isArchModalOpen, setIsArchModalOpen] = useState(false);
+
+  // Track previous window to play chime when new window arrives
+  const previousWindowRef = useRef(null);
+
+  const fetchRankings = useCallback(async (isManual = false) => {
+    if (isManual) setIsRefreshing(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/rankings`);
       if (!response.ok) {
@@ -23,100 +43,187 @@ export default function App() {
       const data = await response.json();
       setRankingData(data);
       setError(null);
+
+      // Play soft chime if window changed
+      if (data?.window_id && previousWindowRef.current && data.window_id !== previousWindowRef.current) {
+        soundFX.playRefresh();
+      }
+      if (data?.window_id) {
+        previousWindowRef.current = data.window_id;
+      }
     } catch (err) {
       console.error('Error fetching rankings:', err);
       setError(err.message || 'Network error fetching rankings');
     } finally {
       setIsLoading(false);
+      if (isManual) setIsRefreshing(false);
     }
   }, []);
 
-  // Polling logic & countdown
+  // Initial load effect
   useEffect(() => {
-    // Initial fetch
-    fetchRankings();
+    let isSubscribed = true;
+    const loadInitialData = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/rankings`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const data = await response.json();
+        if (isSubscribed) {
+          setRankingData(data);
+          setError(null);
+          if (data?.window_id) {
+            previousWindowRef.current = data.window_id;
+          }
+        }
+      } catch (err) {
+        if (isSubscribed) setError(err.message || 'Network error fetching rankings');
+      } finally {
+        if (isSubscribed) setIsLoading(false);
+      }
+    };
 
-    // 1-second interval for countdown & polling trigger
+    loadInitialData();
+    return () => {
+      isSubscribed = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isPaused) return;
+
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
           fetchRankings();
-          return POLL_INTERVAL_SECONDS;
+          return pollInterval;
         }
         return prev - 1;
       });
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [fetchRankings]);
+  }, [fetchRankings, pollInterval, isPaused]);
+
+  // Handle poll interval changes
+  const handleIntervalChange = (newInterval) => {
+    setPollInterval(newInterval);
+    setCountdown(newInterval);
+  };
 
   const handleManualRefresh = () => {
-    setCountdown(POLL_INTERVAL_SECONDS);
-    fetchRankings();
+    soundFX.playClick();
+    setCountdown(pollInterval);
+    fetchRankings(true);
+  };
+
+  const handleToggleAudio = () => {
+    const newState = soundFX.toggle();
+    setIsAudioEnabled(newState);
+    if (newState) {
+      soundFX.playRefresh();
+    }
+  };
+
+  const handleSelectProductForBurst = (productId) => {
+    soundFX.playClick();
+    setBurstTargetProductId(String(productId));
+    // Scroll burst control into view smoothly on mobile/narrow screens
+    const burstElement = document.querySelector('.burst-panel');
+    if (burstElement) {
+      burstElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
   };
 
   const top10Items = rankingData?.top_10 || [];
   const momentumMovers = rankingData?.momentum_movers || [];
 
   return (
-    <div className="app-container">
-      {/* Header Banner */}
-      <header className="dashboard-header">
-        <div className="brand-section">
-          <h1>
-            <span>📊 Real-Time Top-Selling & Momentum Dashboard</span>
-          </h1>
-          <p>Instacart Intraday Sales Velocity Analytics Engine (BDA Mini Project)</p>
-        </div>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <button
-            onClick={handleManualRefresh}
-            className="form-input"
-            style={{
-              cursor: 'pointer',
-              background: 'rgba(59, 130, 246, 0.15)',
-              color: '#60a5fa',
-              borderColor: 'rgba(59, 130, 246, 0.3)',
-              fontWeight: 600,
-            }}
-          >
-            🔄 Refresh Now
-          </button>
-        </div>
-      </header>
+    <div className="velocity-root">
+      {/* Background ambient lighting glows */}
+      <div className="ambient-glow glow-1" />
+      <div className="ambient-glow glow-2" />
+      <div className="ambient-glow glow-3" />
 
-      {/* System Status Bar */}
-      <StatusBar
-        data={rankingData}
-        countdown={countdown}
-        isPolling={true}
-        error={error}
-      />
+      <div className="app-layout">
+        {/* Modern Navbar */}
+        <Header
+          onRefresh={handleManualRefresh}
+          isRefreshing={isRefreshing}
+          pollInterval={pollInterval}
+          onIntervalChange={handleIntervalChange}
+          isAudioEnabled={isAudioEnabled}
+          onToggleAudio={handleToggleAudio}
+          onOpenArchitecture={() => {
+            soundFX.playClick();
+            setIsArchModalOpen(true);
+          }}
+        />
 
-      {/* Main Grid */}
-      <div className="dashboard-grid">
-        {/* Left Column: Top 10 Table */}
-        <div className="left-column">
-          <RankingTable
-            items={top10Items}
-            isLoading={isLoading}
-            error={error}
-          />
-        </div>
+        {/* Executive KPI Metrics Strip */}
+        <SummaryCards
+          data={rankingData}
+          countdown={countdown}
+          pollInterval={pollInterval}
+          isPaused={isPaused}
+          onTogglePause={() => {
+            soundFX.playClick();
+            setIsPaused((prev) => !prev);
+          }}
+          onQuickSelectProduct={handleSelectProductForBurst}
+          error={error}
+        />
 
-        {/* Right Column: Momentum Movers & Demo Burst Control */}
-        <div className="right-column">
-          <MomentumMovers movers={momentumMovers} />
+        {/* Main Analytics Grid */}
+        <main className="analytics-grid">
+          {/* Left Column: Top 10 Leaderboard */}
+          <section className="analytics-main-col">
+            <RankingTable
+              items={top10Items}
+              isLoading={isLoading}
+              error={error}
+              onSelectProductForBurst={handleSelectProductForBurst}
+            />
+          </section>
 
-          <BurstControl
-            topProducts={top10Items}
-            onBurstTriggered={() => {
-              // Trigger fast refresh when burst signal sent
-              fetchRankings();
-            }}
-          />
-        </div>
+          {/* Right Column: Intraday Momentum & Burst Trigger */}
+          <aside className="analytics-side-col">
+            <MomentumMovers
+              movers={momentumMovers}
+              onSelectProductForBurst={handleSelectProductForBurst}
+            />
+
+            <BurstControl
+              topProducts={top10Items}
+              movers={momentumMovers}
+              selectedProductId={burstTargetProductId}
+              onBurstTriggered={() => {
+                // Instantly re-fetch to reflect any fast state changes
+                fetchRankings();
+              }}
+            />
+          </aside>
+        </main>
+
+        {/* Footer */}
+        <footer className="dashboard-footer">
+          <div className="footer-left">
+            <span>BDA Mini Project • Instacart Intraday Velocity Engine</span>
+            <span className="footer-dot">•</span>
+            <span>Hadoop Streaming MapReduce + Kafka + FastAPI</span>
+          </div>
+          <div className="footer-right">
+            <span className="mono">Window Cadence: 60s</span>
+            <span className="footer-dot">•</span>
+            <span className="mono">State: /state/ranking_output.json</span>
+          </div>
+        </footer>
       </div>
+
+      {/* System Architecture Modal */}
+      <ArchitectureModal
+        isOpen={isArchModalOpen}
+        onClose={() => setIsArchModalOpen(false)}
+      />
     </div>
   );
 }

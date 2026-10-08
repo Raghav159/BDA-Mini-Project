@@ -1,15 +1,65 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { soundFX } from '../utils/audio';
 
-export default function BurstControl({ topProducts = [], onBurstTriggered }) {
+export default function BurstControl({
+  topProducts = [],
+  movers = [],
+  selectedProductId = '',
+  onBurstTriggered,
+}) {
   const [productId, setProductId] = useState('');
   const [multiplier, setMultiplier] = useState(10);
-  const [durationSeconds, setDurationSeconds] = useState(120);
+  const [durationSeconds, setDurationSeconds] = useState(60);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState(null);
+  const [activeBurstState, setActiveBurstState] = useState(null);
 
-  const handleSelectProduct = (e) => {
-    const val = e.target.value;
-    setProductId(val);
+  const [prevSelectedProp, setPrevSelectedProp] = useState(selectedProductId);
+
+  // Synchronize external selection during render when prop changes
+  if (selectedProductId && selectedProductId !== prevSelectedProp) {
+    setPrevSelectedProp(selectedProductId);
+    setProductId(String(selectedProductId));
+  }
+
+  // Active burst countdown timer
+  useEffect(() => {
+    if (!activeBurstState) return;
+
+    const timer = setInterval(() => {
+      setActiveBurstState((prev) => {
+        if (!prev) return null;
+        if (prev.remaining <= 1) {
+          return null;
+        }
+        return {
+          ...prev,
+          remaining: prev.remaining - 1,
+        };
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [activeBurstState]);
+
+  // Combined product list without duplicates
+  const productOptions = React.useMemo(() => {
+    const map = new Map();
+    [...topProducts, ...movers].forEach((p) => {
+      if (p.product_id && !map.has(p.product_id)) {
+        map.set(p.product_id, p);
+      }
+    });
+    return Array.from(map.values());
+  }, [topProducts, movers]);
+
+  const selectedProductObj = productOptions.find((p) => String(p.product_id) === String(productId));
+
+  // Quick preset handlers
+  const applyPreset = (mult, dur) => {
+    setMultiplier(mult);
+    setDurationSeconds(dur);
+    soundFX.playClick();
   };
 
   const handleSubmit = async (e) => {
@@ -21,21 +71,22 @@ export default function BurstControl({ topProducts = [], onBurstTriggered }) {
     const parsedDur = parseInt(durationSeconds, 10);
 
     if (isNaN(parsedId) || parsedId <= 0) {
-      setFeedback({ type: 'error', message: 'Please enter or select a valid Product ID (> 0).' });
+      setFeedback({ type: 'error', message: 'Please specify a valid numeric Product ID.' });
       return;
     }
 
     if (isNaN(parsedMult) || parsedMult <= 0) {
-      setFeedback({ type: 'error', message: 'Multiplier must be a positive integer.' });
+      setFeedback({ type: 'error', message: 'Multiplier must be greater than 0.' });
       return;
     }
 
     if (isNaN(parsedDur) || parsedDur <= 0) {
-      setFeedback({ type: 'error', message: 'Duration must be a positive integer.' });
+      setFeedback({ type: 'error', message: 'Duration must be greater than 0 seconds.' });
       return;
     }
 
     setIsSubmitting(true);
+    soundFX.playClick();
 
     try {
       const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -54,12 +105,24 @@ export default function BurstControl({ topProducts = [], onBurstTriggered }) {
       const resData = await response.json();
 
       if (!response.ok) {
-        throw new Error(resData.detail || 'Failed to trigger burst signal');
+        throw new Error(resData.detail || 'Failed to trigger burst signal in API');
       }
 
+      // Success
+      soundFX.playBurst();
+
+      const prodName = selectedProductObj?.product_name || `Product #${parsedId}`;
       setFeedback({
         type: 'success',
-        message: `🚀 Sales burst triggered! Product #${parsedId} (${parsedMult}x volume for ${parsedDur}s)`,
+        message: `Signal deployed! Kafka will inject ${parsedMult}x burst for "${prodName}" for ${parsedDur}s.`,
+      });
+
+      setActiveBurstState({
+        productId: parsedId,
+        productName: prodName,
+        multiplier: parsedMult,
+        totalDuration: parsedDur,
+        remaining: parsedDur,
       });
 
       if (onBurstTriggered) {
@@ -68,7 +131,7 @@ export default function BurstControl({ topProducts = [], onBurstTriggered }) {
     } catch (err) {
       setFeedback({
         type: 'error',
-        message: `Failed to send burst signal: ${err.message}`,
+        message: `Burst dispatch error: ${err.message}`,
       });
     } finally {
       setIsSubmitting(false);
@@ -76,44 +139,115 @@ export default function BurstControl({ topProducts = [], onBurstTriggered }) {
   };
 
   return (
-    <div className="dashboard-card">
-      <div className="card-title-bar">
-        <h2>⚡ Demo Sales Burst Trigger</h2>
-        <span className="pipeline-badge" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#fcd34d', borderColor: 'rgba(245, 158, 11, 0.3)' }}>
-          Kafka Injection
-        </span>
+    <div className="dashboard-panel burst-panel">
+      {/* Header */}
+      <div className="panel-header">
+        <div className="panel-title">
+          <span className="panel-icon burst-icon">⚡</span>
+          <div>
+            <h3>Live Demo Traffic Injection</h3>
+            <p className="panel-subtitle">Simulate real-time sales spike via Kafka producer</p>
+          </div>
+        </div>
+        <span className="badge-live-stream">KAFKA LIVE</span>
       </div>
 
-      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-        Inject spike traffic into Kafka producer to simulate intraday sales surge for live demo.
-      </p>
+      {/* Active Burst Banner if running */}
+      {activeBurstState && (
+        <div className="active-burst-banner">
+          <div className="active-burst-info">
+            <span className="pulse-burst-dot" />
+            <div>
+              <strong className="active-burst-title">
+                Active Traffic Spike: {activeBurstState.productName}
+              </strong>
+              <div className="active-burst-meta mono">
+                ID: #{activeBurstState.productId} • {activeBurstState.multiplier}x Multiplier • {activeBurstState.remaining}s remaining
+              </div>
+            </div>
+          </div>
+          <div className="active-burst-timer mono">
+            {activeBurstState.remaining}s
+          </div>
+          <div className="burst-progress-bar-bg">
+            <div
+              className="burst-progress-bar-fill"
+              style={{
+                width: `${(activeBurstState.remaining / activeBurstState.totalDuration) * 100}%`,
+              }}
+            />
+          </div>
+        </div>
+      )}
 
-      <form onSubmit={handleSubmit} className="burst-form">
-        <div className="form-group">
-          <label htmlFor="product-select">Quick Select Top Product</label>
+      {/* Quick Presets */}
+      <div className="burst-presets-row">
+        <span className="presets-label">Sim Presets:</span>
+        <div className="presets-buttons">
+          <button
+            type="button"
+            className="preset-pill-btn"
+            onClick={() => applyPreset(3, 30)}
+          >
+            ⚡ Light (3x / 30s)
+          </button>
+          <button
+            type="button"
+            className="preset-pill-btn"
+            onClick={() => applyPreset(10, 60)}
+          >
+            🚀 Rush (10x / 60s)
+          </button>
+          <button
+            type="button"
+            className="preset-pill-btn"
+            onClick={() => applyPreset(25, 120)}
+          >
+            💥 Flash (25x / 120s)
+          </button>
+          <button
+            type="button"
+            className="preset-pill-btn"
+            onClick={() => applyPreset(50, 180)}
+          >
+            🌪️ Hyper (50x / 180s)
+          </button>
+        </div>
+      </div>
+
+      {/* Main Form */}
+      <form onSubmit={handleSubmit} className="burst-command-form">
+        {/* Product Selector */}
+        <div className="form-field">
+          <label htmlFor="product-quick-select" className="field-label">
+            Target Product Selection
+          </label>
           <select
-            id="product-select"
-            className="form-select"
+            id="product-quick-select"
+            className="select-field"
             value={productId}
-            onChange={handleSelectProduct}
+            onChange={(e) => setProductId(e.target.value)}
             disabled={isSubmitting}
           >
-            <option value="">-- Select from Top 10 or enter ID below --</option>
-            {topProducts.map((p) => (
+            <option value="">-- Choose from active products or type ID below --</option>
+            {productOptions.map((p) => (
               <option key={p.product_id} value={p.product_id}>
-                #{p.product_id} - {p.product_name} ({p.total_units} units)
+                #{p.product_id} - {p.product_name} ({p.total_units?.toLocaleString()} units)
               </option>
             ))}
           </select>
         </div>
 
-        <div className="form-group">
-          <label htmlFor="product-id-input">Product ID *</label>
+        {/* Manual ID Input */}
+        <div className="form-field">
+          <label htmlFor="manual-product-id" className="field-label">
+            Product ID (Numeric SKU)
+          </label>
           <input
-            id="product-id-input"
+            id="manual-product-id"
             type="number"
-            className="form-input mono"
-            placeholder="e.g. 24852"
+            className="input-field mono"
+            placeholder="e.g. 24852 (Banana) or 26209 (Limes)"
             value={productId}
             onChange={(e) => setProductId(e.target.value)}
             disabled={isSubmitting}
@@ -121,52 +255,79 @@ export default function BurstControl({ topProducts = [], onBurstTriggered }) {
           />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-          <div className="form-group">
-            <label htmlFor="multiplier-input">Multiplier (x)</label>
-            <input
-              id="multiplier-input"
-              type="number"
-              className="form-input mono"
-              min="1"
-              value={multiplier}
-              onChange={(e) => setMultiplier(e.target.value)}
-              disabled={isSubmitting}
-              required
-            />
+        {/* Multiplier Slider & Value */}
+        <div className="form-field">
+          <div className="slider-header-row">
+            <label htmlFor="multiplier-slider" className="field-label">
+              Volume Multiplier
+            </label>
+            <span className="slider-badge mono">{multiplier}x Traffic</span>
           </div>
-
-          <div className="form-group">
-            <label htmlFor="duration-input">Duration (sec)</label>
+          <div className="range-slider-wrap">
             <input
-              id="duration-input"
-              type="number"
-              className="form-input mono"
+              id="multiplier-slider"
+              type="range"
               min="1"
-              value={durationSeconds}
-              onChange={(e) => setDurationSeconds(e.target.value)}
+              max="50"
+              step="1"
+              className="range-slider"
+              value={multiplier}
+              onChange={(e) => setMultiplier(Number(e.target.value))}
               disabled={isSubmitting}
-              required
             />
+            <div className="slider-ticks">
+              <span>1x (Base)</span>
+              <span>10x</span>
+              <span>25x</span>
+              <span>50x (Max)</span>
+            </div>
           </div>
         </div>
 
-        <button type="submit" className="burst-btn" disabled={isSubmitting}>
+        {/* Duration Select Pills */}
+        <div className="form-field">
+          <label className="field-label">Burst Duration Window</label>
+          <div className="duration-pills-row">
+            {[30, 60, 120, 180, 300].map((sec) => (
+              <button
+                key={sec}
+                type="button"
+                className={`duration-pill ${durationSeconds === sec ? 'active' : ''}`}
+                onClick={() => setDurationSeconds(sec)}
+                disabled={isSubmitting}
+              >
+                {sec >= 60 ? `${sec / 60} min` : `${sec}s`}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Action Trigger Button */}
+        <button
+          type="submit"
+          className="deploy-burst-button"
+          disabled={isSubmitting || !productId}
+        >
           {isSubmitting ? (
             <>
-              <span className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></span>
-              Sending Burst Signal...
+              <span className="pulse-spinner-sm" />
+              <span>Transmitting Kafka Signal...</span>
             </>
           ) : (
             <>
-              ⚡ Trigger Sales Burst
+              <span className="btn-lightning">⚡</span>
+              <span>Inject Real-Time Traffic Spike</span>
             </>
           )}
         </button>
 
+        {/* Feedback Message */}
         {feedback && (
-          <div className={`feedback-msg ${feedback.type}`}>
-            {feedback.message}
+          <div className={`status-banner-box banner-${feedback.type}`}>
+            <span className="banner-icon">
+              {feedback.type === 'success' ? '🚀' : '⚠️'}
+            </span>
+            <span className="banner-text">{feedback.message}</span>
           </div>
         )}
       </form>
