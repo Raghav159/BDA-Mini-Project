@@ -1,129 +1,126 @@
 import React, { useState, useMemo } from 'react';
+import {
+  Trophy,
+  Medal,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown,
+  Search,
+  X,
+  Flame,
+  Crown,
+  Zap,
+  Rocket,
+  AlertTriangle,
+  Unplug,
+} from 'lucide-react';
+
+const ROW_CLASS = { 1: 'row-gold', 2: 'row-silver', 3: 'row-bronze' };
+
+function RankBadge({ rank }) {
+  if (rank === 1) {
+    return (
+      <span className="rank-badge rank-badge-gold" title="Rank #1 Leader">
+        <Trophy size={13} strokeWidth={2.4} />
+      </span>
+    );
+  }
+  if (rank === 2) {
+    return (
+      <span className="rank-badge rank-badge-silver" title="Rank #2 Podium">
+        <Medal size={13} strokeWidth={2.4} />
+      </span>
+    );
+  }
+  if (rank === 3) {
+    return (
+      <span className="rank-badge rank-badge-bronze" title="Rank #3 Podium">
+        <Medal size={13} strokeWidth={2.4} />
+      </span>
+    );
+  }
+  return <span className="rank-badge rank-badge-std">{rank}</span>;
+}
+
+function MomPill({ pct, direction }) {
+  const dir = direction?.toLowerCase() || (pct > 0 ? 'up' : pct < 0 ? 'down' : 'neutral');
+  const fmt = typeof pct === 'number' ? `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%` : '0.0%';
+  const cls = `mom-pill mom-pill-${dir}`;
+  return (
+    <span className={cls} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+      {dir === 'up' ? <TrendingUp size={11} /> : dir === 'down' ? <TrendingDown size={11} /> : <Minus size={11} />}
+      <span className="mono">{fmt}</span>
+    </span>
+  );
+}
 
 export default function RankingTable({ items = [], isLoading, error, onSelectProductForBurst }) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterMode, setFilterMode] = useState('all'); // 'all', 'surging', 'cooling', 'podium'
-  const [sortField, setSortField] = useState('rank'); // 'rank', 'units', 'current', 'momentum'
-  const [sortDirection, setSortDirection] = useState('asc'); // 'asc' or 'desc'
+  const [search,     setSearch]     = useState('');
+  const [filter,     setFilter]     = useState('all');
+  const [sortField,  setSortField]  = useState('rank');
+  const [sortDir,    setSortDir]    = useState('asc');
   const [expandedId, setExpandedId] = useState(null);
 
-  // Maximum total units among items for proportional bar calculation
-  const maxTotalUnits = useMemo(() => {
-    if (!items.length) return 1;
-    return Math.max(...items.map((i) => i.total_units || 0), 1);
-  }, [items]);
+  const maxUnits = useMemo(() => Math.max(...items.map(i => i.total_units || 0), 1), [items]);
 
-  // Filtered and sorted items
-  const processedItems = useMemo(() => {
-    let result = [...items];
-
-    // Search filter
-    if (searchTerm.trim()) {
-      const q = searchTerm.toLowerCase().trim();
-      result = result.filter(
-        (item) =>
-          item.product_name?.toLowerCase().includes(q) ||
-          String(item.product_id).includes(q)
-      );
+  const processed = useMemo(() => {
+    let res = [...items];
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      res = res.filter(i => i.product_name?.toLowerCase().includes(q) || String(i.product_id).includes(q));
     }
+    if (filter === 'surging') res = res.filter(i => (i.momentum_pct || 0) > 0);
+    if (filter === 'cooling') res = res.filter(i => (i.momentum_pct || 0) < 0);
+    if (filter === 'podium')  res = res.filter(i => i.rank <= 3);
 
-    // Category filter
-    if (filterMode === 'surging') {
-      result = result.filter((item) => (item.momentum_pct || 0) > 0);
-    } else if (filterMode === 'cooling') {
-      result = result.filter((item) => (item.momentum_pct || 0) < 0);
-    } else if (filterMode === 'podium') {
-      result = result.filter((item) => item.rank <= 3);
-    }
-
-    // Sorting
-    result.sort((a, b) => {
-      let valA, valB;
-      if (sortField === 'rank') {
-        valA = a.rank ?? 999;
-        valB = b.rank ?? 999;
-      } else if (sortField === 'units') {
-        valA = a.total_units ?? 0;
-        valB = b.total_units ?? 0;
-      } else if (sortField === 'current') {
-        valA = a.current_window_units ?? 0;
-        valB = b.current_window_units ?? 0;
-      } else if (sortField === 'momentum') {
-        valA = a.momentum_pct ?? 0;
-        valB = b.momentum_pct ?? 0;
-      }
-
-      if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
-      if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
+    res.sort((a, b) => {
+      const va = sortField === 'rank' ? (a.rank ?? 999) : sortField === 'units' ? (a.total_units ?? 0) : sortField === 'current' ? (a.current_window_units ?? 0) : (a.momentum_pct ?? 0);
+      const vb = sortField === 'rank' ? (b.rank ?? 999) : sortField === 'units' ? (b.total_units ?? 0) : sortField === 'current' ? (b.current_window_units ?? 0) : (b.momentum_pct ?? 0);
+      return sortDir === 'asc' ? va - vb : vb - va;
     });
-
-    return result;
-  }, [items, searchTerm, filterMode, sortField, sortDirection]);
+    return res;
+  }, [items, search, filter, sortField, sortDir]);
 
   const handleSort = (field) => {
-    if (sortField === field) {
-      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortField(field);
-      // Sensible default directions
-      setSortDirection(field === 'rank' ? 'asc' : 'desc');
-    }
+    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortField(field); setSortDir(field === 'rank' ? 'asc' : 'desc'); }
   };
 
-  const getRankBadge = (rank) => {
-    if (rank === 1) {
-      return (
-        <span className="rank-podium rank-gold" title="Rank #1 Leader">
-          <span className="rank-crown">👑</span> 1
-        </span>
-      );
-    }
-    if (rank === 2) {
-      return (
-        <span className="rank-podium rank-silver" title="Rank #2 Runner-up">
-          <span className="rank-crown">🥈</span> 2
-        </span>
-      );
-    }
-    if (rank === 3) {
-      return (
-        <span className="rank-podium rank-bronze" title="Rank #3 Podium">
-          <span className="rank-crown">🥉</span> 3
-        </span>
-      );
-    }
-    return <span className="rank-badge rank-standard">{rank}</span>;
-  };
-
-  const renderMomentumPill = (pct, direction) => {
-    const dir = direction?.toLowerCase() || (pct > 0 ? 'up' : pct < 0 ? 'down' : 'neutral');
-    const isUp = dir === 'up';
-    const isDown = dir === 'down';
-    const arrow = isUp ? '▲' : isDown ? '▼' : '―';
-    const formatted = typeof pct === 'number' ? `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%` : '0.0%';
-
+  const SortTh = ({ field, label, width }) => {
+    const active = sortField === field;
     return (
-      <span className={`momentum-pill momentum-${dir}`}>
-        <span className="momentum-arrow">{arrow}</span>
-        <span className="mono">{formatted}</span>
-      </span>
+      <th className="sortable" style={width ? { width } : {}} onClick={() => handleSort(field)}>
+        <div className="th-inner">
+          <span>{label}</span>
+          <span className={`sort-arrow ${active ? 'active' : ''}`} style={{ display: 'inline-flex', alignItems: 'center' }}>
+            {active ? (sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ChevronsUpDown size={12} />}
+          </span>
+        </div>
+      </th>
     );
   };
 
   if (isLoading) {
     return (
-      <div className="dashboard-panel">
-        <div className="panel-header">
-          <div className="panel-title">
-            <span className="panel-icon">🏆</span>
-            <h2>Top 10 Products by Total Sales</h2>
+      <div className="panel">
+        <div className="panel-hdr">
+          <div className="panel-title-group">
+            <div className="panel-icon-wrap panel-icon-wrap-blue">
+              <Trophy size={16} />
+            </div>
+            <div>
+              <div className="panel-heading">Leaderboard · Top 10 Products</div>
+              <div className="panel-sub">Cumulative MapReduce output — all windows</div>
+            </div>
           </div>
         </div>
-        <div className="empty-state-card">
-          <div className="pulse-spinner"></div>
-          <p className="empty-state-title">Loading MapReduce State...</p>
-          <span className="empty-state-sub">Fetching latest verified window rankings</span>
+        <div className="empty-state">
+          <div className="spinner" />
+          <div className="empty-title">Loading MapReduce state…</div>
+          <div className="empty-sub">Fetching latest window rankings from the pipeline</div>
         </div>
       </div>
     );
@@ -131,244 +128,225 @@ export default function RankingTable({ items = [], isLoading, error, onSelectPro
 
   if (error) {
     return (
-      <div className="dashboard-panel">
-        <div className="panel-header">
-          <div className="panel-title">
-            <span className="panel-icon">⚠️</span>
-            <h2>Top 10 Products by Total Sales</h2>
+      <div className="panel">
+        <div className="panel-hdr">
+          <div className="panel-title-group">
+            <div className="panel-icon-wrap panel-icon-wrap-blue">
+              <AlertTriangle size={16} />
+            </div>
+            <div>
+              <div className="panel-heading">Leaderboard · Top 10 Products</div>
+            </div>
           </div>
         </div>
-        <div className="empty-state-card error-state">
-          <span className="empty-icon">🔌</span>
-          <p className="empty-state-title" style={{ color: 'var(--status-down)' }}>
-            Ranking State Unavailable
-          </p>
-          <p className="empty-state-sub">{error}</p>
-          <span className="empty-state-hint mono">Endpoint: http://localhost:8000/api/rankings</span>
+        <div className="empty-state">
+          <span className="empty-icon">
+            <Unplug size={32} />
+          </span>
+          <div className="empty-title" style={{ color: 'var(--status-down)' }}>Ranking State Unavailable</div>
+          <div className="empty-sub">{error}</div>
+          <div className="empty-hint">GET http://localhost:8000/api/rankings</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="dashboard-panel">
-      {/* Panel Top Bar */}
-      <div className="panel-header">
-        <div className="panel-title">
-          <span className="panel-icon">🏆</span>
+    <div className="panel">
+      {/* Header */}
+      <div className="panel-hdr">
+        <div className="panel-title-group">
+          <div className="panel-icon-wrap panel-icon-wrap-blue">
+            <Trophy size={16} />
+          </div>
           <div>
-            <h2>Leaderboard: Top 10 Cumulative Sales</h2>
-            <p className="panel-subtitle">
-              Calculated across Hadoop MapReduce tumbling partitions with Intraday Velocity delta
-            </p>
+            <div className="panel-heading">Leaderboard · Top 10 Cumulative Sales</div>
+            <div className="panel-sub">Hadoop MapReduce tumbling window aggregation · Intraday velocity delta</div>
           </div>
         </div>
-        <div className="panel-badge-group">
-          <span className="counter-pill">{processedItems.length} Products</span>
+        <div className="panel-badges">
+          <span className="badge badge-live">Live</span>
+          <span className="badge badge-mapreduce">MapReduce</span>
+          <span className="badge badge-count">{processed.length} products</span>
         </div>
       </div>
 
-      {/* Filter and Search Toolbar */}
+      {/* Toolbar */}
       <div className="table-toolbar">
-        <div className="search-wrap">
-          <span className="search-icon">🔍</span>
+        <div className="search-box">
+          <Search size={14} className="search-icon" />
           <input
             type="text"
             className="search-input"
-            placeholder="Filter by product name or ID..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search by name or ID…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
           />
-          {searchTerm && (
-            <button className="clear-search-btn" onClick={() => setSearchTerm('')}>
-              ✕
+          {search && (
+            <button className="search-clear" onClick={() => setSearch('')} aria-label="Clear search">
+              <X size={13} />
             </button>
           )}
         </div>
 
         <div className="filter-chips">
-          <button
-            className={`filter-chip ${filterMode === 'all' ? 'active' : ''}`}
-            onClick={() => setFilterMode('all')}
-          >
-            All Products
-          </button>
-          <button
-            className={`filter-chip ${filterMode === 'surging' ? 'active' : ''}`}
-            onClick={() => setFilterMode('surging')}
-          >
-            🔥 Surging (▲)
-          </button>
-          <button
-            className={`filter-chip ${filterMode === 'cooling' ? 'active' : ''}`}
-            onClick={() => setFilterMode('cooling')}
-          >
-            ❄️ Cooling (▼)
-          </button>
-          <button
-            className={`filter-chip ${filterMode === 'podium' ? 'active' : ''}`}
-            onClick={() => setFilterMode('podium')}
-          >
-            👑 Podium Top 3
-          </button>
+          {[
+            { key: 'all',     label: 'All',     icon: null,         cls: '' },
+            { key: 'surging', label: 'Surging', icon: Flame,        cls: 'chip-surge' },
+            { key: 'cooling', label: 'Cooling', icon: TrendingDown, cls: 'chip-cool' },
+            { key: 'podium',  label: 'Podium',  icon: Crown,        cls: 'chip-podium' },
+          ].map(f => {
+            const IconComponent = f.icon;
+            return (
+              <button
+                key={f.key}
+                className={`chip ${f.cls} ${filter === f.key ? 'active' : ''}`}
+                onClick={() => setFilter(f.key)}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+              >
+                {IconComponent && <IconComponent size={12} />}
+                <span>{f.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Main Table */}
-      <div className="table-responsive-container">
-        <table className="modern-table">
+      {/* Table */}
+      <div className="tbl-wrap">
+        <table className="tbl">
+          <colgroup>
+            <col style={{ width: '56px' }} />
+            <col />
+            <col style={{ width: '150px' }} />
+            <col style={{ width: '130px' }} />
+            <col style={{ width: '120px' }} />
+            <col style={{ width: '76px' }} />
+          </colgroup>
           <thead>
             <tr>
-              <th className="th-sortable" onClick={() => handleSort('rank')}>
-                <div className="th-content">
-                  <span>Rank</span>
-                  <span className="sort-indicator">{sortField === 'rank' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'}</span>
-                </div>
-              </th>
-              <th>Product Details</th>
-              <th className="th-sortable" onClick={() => handleSort('units')}>
-                <div className="th-content">
-                  <span>Cumulative Units</span>
-                  <span className="sort-indicator">{sortField === 'units' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'}</span>
-                </div>
-              </th>
-              <th className="th-sortable" onClick={() => handleSort('current')}>
-                <div className="th-content">
-                  <span>Window Velocity (Curr vs Prev)</span>
-                  <span className="sort-indicator">{sortField === 'current' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'}</span>
-                </div>
-              </th>
-              <th className="th-sortable" onClick={() => handleSort('momentum')}>
-                <div className="th-content">
-                  <span>Intraday Momentum</span>
-                  <span className="sort-indicator">{sortField === 'momentum' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'}</span>
-                </div>
-              </th>
+              <SortTh field="rank"     label="Rank" />
+              <th>Product</th>
+              <SortTh field="units"    label="Cumulative Units" />
+              <SortTh field="current"  label="Window Velocity" />
+              <SortTh field="momentum" label="Momentum" />
               <th style={{ textAlign: 'right' }}>Action</th>
             </tr>
           </thead>
           <tbody>
-            {processedItems.length === 0 ? (
+            {processed.length === 0 ? (
               <tr>
-                <td colSpan="6" className="no-data-cell">
-                  <div className="empty-sub-state">
-                    <span>🔎 No products match the current filter or search criteria.</span>
+                <td colSpan="6">
+                  <div className="empty-state">
+                    <span className="empty-icon">
+                      <Search size={32} />
+                    </span>
+                    <div className="empty-title">No products match</div>
+                    <div className="empty-sub">Try changing the search or filter.</div>
                   </div>
                 </td>
               </tr>
             ) : (
-              processedItems.map((item) => {
-                const isExpanded = expandedId === item.product_id;
-                const volumeSharePct = ((item.total_units / maxTotalUnits) * 100).toFixed(0);
-                const winDelta = (item.current_window_units || 0) - (item.previous_window_units || 0);
+              processed.map(item => {
+                const isExp    = expandedId === item.product_id;
+                const sharePct = ((item.total_units / maxUnits) * 100).toFixed(0);
+                const delta    = (item.current_window_units || 0) - (item.previous_window_units || 0);
+                const rowCls   = ROW_CLASS[item.rank] || '';
 
                 return (
-                  <React.Fragment key={item.product_id || item.rank}>
+                  <React.Fragment key={item.product_id ?? item.rank}>
                     <tr
-                      className={`table-row ${isExpanded ? 'row-expanded' : ''} ${item.rank <= 3 ? `podium-row podium-${item.rank}` : ''}`}
-                      onClick={() => setExpandedId(isExpanded ? null : item.product_id)}
+                      className={`${rowCls} ${isExp ? 'expanded' : ''}`}
+                      onClick={() => setExpandedId(isExp ? null : item.product_id)}
                     >
                       {/* Rank */}
                       <td className="td-rank">
-                        {getRankBadge(item.rank)}
+                        <RankBadge rank={item.rank} />
                       </td>
 
-                      {/* Product Name & ID */}
+                      {/* Product */}
                       <td className="td-product">
-                        <div className="product-cell-wrap">
-                          <span className="product-title">{item.product_name || `Product #${item.product_id}`}</span>
-                          <div className="product-sub-row">
-                            <span className="product-id-tag mono">ID: {item.product_id}</span>
-                            <span className="share-tag">{volumeSharePct}% of leader</span>
-                          </div>
+                        <div className="product-name" title={item.product_name}>
+                          {item.product_name || `Product #${item.product_id}`}
+                        </div>
+                        <div className="product-sub">
+                          <span className="product-id-tag">#{item.product_id}</span>
+                          <span className="product-share-tag">{sharePct}% of leader</span>
                         </div>
                       </td>
 
-                      {/* Total Units with proportional volume bar */}
+                      {/* Cumulative units + bar */}
                       <td className="td-units">
-                        <div className="units-cell-wrap">
-                          <span className="units-val mono">{item.total_units?.toLocaleString() ?? 0}</span>
-                          <div className="volume-bar-bg" title={`${volumeSharePct}% volume proportion`}>
-                            <div
-                              className="volume-bar-fill"
-                              style={{ width: `${Math.max(5, Math.min(100, volumeSharePct))}%` }}
-                            />
-                          </div>
+                        <div className="units-number">{(item.total_units || 0).toLocaleString()}</div>
+                        <div className="vol-bar-bg">
+                          <div
+                            className="vol-bar-fill"
+                            style={{ width: `${Math.max(5, Math.min(100, sharePct))}%` }}
+                          />
                         </div>
                       </td>
 
-                      {/* Window Velocity: Current vs Previous */}
-                      <td className="td-window-velocity">
-                        <div className="velocity-compare-wrap">
-                          <div className="velocity-numbers mono">
-                            <span className="curr-units">{item.current_window_units ?? 0}</span>
-                            <span className="vs-divider">/</span>
-                            <span className="prev-units">{item.previous_window_units ?? 0}</span>
-                          </div>
-                          <div className="mini-velocity-spark" title={`Delta: ${winDelta >= 0 ? '+' : ''}${winDelta} units`}>
-                            <span className={`delta-tag ${winDelta > 0 ? 'delta-pos' : winDelta < 0 ? 'delta-neg' : 'delta-zero'}`}>
-                              {winDelta > 0 ? `+${winDelta}` : winDelta}
-                            </span>
-                          </div>
+                      {/* Window velocity */}
+                      <td className="td-velocity">
+                        <div className="velocity-nums">
+                          <span className="vel-curr">{item.current_window_units ?? 0}</span>
+                          <span className="vel-sep">/</span>
+                          <span className="vel-prev">{item.previous_window_units ?? 0}</span>
+                        </div>
+                        <div className={`vel-delta ${delta > 0 ? 'vel-delta-pos' : delta < 0 ? 'vel-delta-neg' : 'vel-delta-zero'}`}>
+                          {delta > 0 ? `+${delta}` : delta}
                         </div>
                       </td>
 
-                      {/* Momentum % */}
+                      {/* Momentum */}
                       <td className="td-momentum">
-                        {renderMomentumPill(item.momentum_pct, item.momentum_direction)}
+                        <MomPill pct={item.momentum_pct} direction={item.momentum_direction} />
                       </td>
 
-                      {/* Actions */}
-                      <td className="td-actions" style={{ textAlign: 'right' }}>
+                      {/* Action */}
+                      <td className="td-action">
                         <button
-                          className="row-burst-trigger-btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (onSelectProductForBurst) {
-                              onSelectProductForBurst(item.product_id);
-                            }
-                          }}
-                          title={`Target Product #${item.product_id} in Burst Trigger`}
+                          className="burst-row-btn"
+                          onClick={e => { e.stopPropagation(); onSelectProductForBurst?.(item.product_id); }}
+                          title={`Inject burst for #${item.product_id}`}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}
                         >
-                          ⚡ Burst
+                          <Zap size={11} />
+                          <span>Burst</span>
                         </button>
                       </td>
                     </tr>
 
-                    {/* Expandable row detail */}
-                    {isExpanded && (
-                      <tr className="expanded-detail-row">
+                    {/* Expanded detail row */}
+                    {isExp && (
+                      <tr className="tbl-expanded-row">
                         <td colSpan="6">
-                          <div className="expanded-detail-box">
-                            <div className="detail-col">
-                              <span className="detail-label">Product Name</span>
-                              <span className="detail-val">{item.product_name}</span>
+                          <div className="expanded-content">
+                            <div>
+                              <div className="exp-field-label">Product Name</div>
+                              <div className="exp-field-val">{item.product_name}</div>
                             </div>
-                            <div className="detail-col">
-                              <span className="detail-label">Kafka Product ID</span>
-                              <span className="detail-val mono">#{item.product_id}</span>
+                            <div>
+                              <div className="exp-field-label">Kafka SKU ID</div>
+                              <div className="exp-field-val">#{item.product_id}</div>
                             </div>
-                            <div className="detail-col">
-                              <span className="detail-label">Current Window Run Rate</span>
-                              <span className="detail-val mono">{item.current_window_units} units/60s</span>
+                            <div>
+                              <div className="exp-field-label">Current Window Run Rate</div>
+                              <div className="exp-field-val">{item.current_window_units} units / 60s</div>
                             </div>
-                            <div className="detail-col">
-                              <span className="detail-label">Window-over-Window Shift</span>
-                              <span className="detail-val mono">
-                                {winDelta >= 0 ? `+${winDelta}` : winDelta} units ({item.momentum_pct?.toFixed(1)}%)
-                              </span>
+                            <div>
+                              <div className="exp-field-label">Window-over-Window Shift</div>
+                              <div className="exp-field-val">{delta >= 0 ? `+${delta}` : delta} units ({item.momentum_pct?.toFixed(1)}%)</div>
                             </div>
-                            <div className="detail-col action-col">
+                            <div>
+                              <div className="exp-field-label">Action</div>
                               <button
-                                className="expanded-action-btn"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (onSelectProductForBurst) {
-                                    onSelectProductForBurst(item.product_id);
-                                  }
-                                }}
+                                className="exp-inject-btn"
+                                onClick={e => { e.stopPropagation(); onSelectProductForBurst?.(item.product_id); }}
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                               >
-                                🚀 Inject Spike Traffic for this Product
+                                <Rocket size={13} />
+                                <span>Inject Spike Traffic</span>
                               </button>
                             </div>
                           </div>

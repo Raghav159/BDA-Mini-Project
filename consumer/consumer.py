@@ -45,6 +45,34 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+# Python 3.12 Windows compatibility patch for kafka-python selectors
+import selectors
+if hasattr(selectors, "SelectSelector"):
+    _orig_unregister = selectors.SelectSelector.unregister
+    def _safe_unregister(self, fileobj):
+        try:
+            return _orig_unregister(self, fileobj)
+        except Exception:
+            key = None
+            try:
+                fd = fileobj.fileno() if hasattr(fileobj, "fileno") else -1
+            except Exception:
+                fd = -1
+            for reg_fd, reg_key in list(getattr(self, "_map", {}).items()):
+                if reg_key.fileobj == fileobj or (fd != -1 and reg_fd == fd):
+                    key = reg_key
+                    break
+            if key is not None:
+                self._map.pop(key.fd, None)
+                if hasattr(self, "_readers") and self._readers is not None:
+                    self._readers.discard(key.fd)
+                if hasattr(self, "_writers") and self._writers is not None:
+                    self._writers.discard(key.fd)
+                return key
+            return None
+    selectors.SelectSelector.unregister = _safe_unregister
+
+
 from kafka import KafkaConsumer
 from kafka.errors import KafkaError
 
@@ -174,33 +202,41 @@ def run_mapreduce(
     output_hdfs_path: str,
     script_path: Path,
 ) -> None:
-    """Invoke scripts/run_mapreduce.sh and raise on failure.
+    """Invoke MapReduce on Hadoop Streaming directly via Docker and raise on failure.
 
     Args:
         input_hdfs_path:  HDFS path of the window TSV file.
         output_hdfs_path: HDFS path for MapReduce output directory.
-        script_path:      Absolute local path to run_mapreduce.sh.
+        script_path:      Absolute local path to run_mapreduce.sh (retained for signature compat).
 
     Raises:
-        FileNotFoundError: if run_mapreduce.sh does not exist.
         subprocess.CalledProcessError: if the MapReduce job returns non-zero.
     """
-    if not script_path.exists():
-        raise FileNotFoundError(f"run_mapreduce.sh not found at {script_path}")
+    container = "bda-hadoop"
+    streaming_jar = "/opt/hadoop/share/hadoop/tools/lib/hadoop-streaming-3.3.6.jar"
 
-    cmd = [str(script_path), input_hdfs_path, output_hdfs_path]
-    logger.info(f"Triggering MapReduce: {' '.join(cmd)}")
-
-    result = subprocess.run(
-        cmd,
-        capture_output=False,   # let stdout/stderr stream to our terminal
-        text=True,
+    # 1. Clean output directory if it already exists
+    subprocess.run(
+        ["docker", "exec", container, "hdfs", "dfs", "-rm", "-r", "-f", output_hdfs_path],
+        capture_output=True,
+        check=False,
     )
 
+    # 2. Submit streaming job directly via Docker
+    mr_cmd = [
+        "docker", "exec", container, "hadoop", "jar", streaming_jar,
+        "-files", "hdfs://localhost:9000/bda-project/mapreduce/mapper.py,hdfs://localhost:9000/bda-project/mapreduce/reducer.py",
+        "-mapper", "python3 mapper.py",
+        "-reducer", "python3 reducer.py",
+        "-input", input_hdfs_path,
+        "-output", output_hdfs_path,
+    ]
+    logger.info(f"Triggering MapReduce directly via Docker: {' '.join(mr_cmd)}")
+    result = subprocess.run(mr_cmd, capture_output=False, text=True)
     if result.returncode != 0:
         raise subprocess.CalledProcessError(
             result.returncode,
-            cmd,
+            mr_cmd,
             output=None,
             stderr=None,
         )
@@ -290,6 +326,7 @@ class WindowOrchestrator:
             "auto_offset_reset": self.auto_offset_reset,
             "enable_auto_commit": True,
             "auto_commit_interval_ms": 5000,
+            "api_version": (2, 6, 0),
             "value_deserializer": lambda raw: raw,  # We do JSON parsing ourselves
         }
         if self.consumer_timeout_ms is not None:
@@ -366,6 +403,36 @@ class WindowOrchestrator:
     # Window logic                                                            #
     # ---------------------------------------------------------------------- #
 
+    def _report_status(
+        self,
+        stage: str,
+        stage_index: int,
+        detail: str,
+        status: str = "active",
+        active_window_id: Optional[str] = None,
+    ) -> None:
+        """Atomically persist pipeline telemetry state for the FastAPI serving layer."""
+        try:
+            status_file = self.settings.STATE_DIR / "pipeline_status.json"
+            status_file.parent.mkdir(parents=True, exist_ok=True)
+            now_iso = datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            data = {
+                "status": status,
+                "stage": stage,
+                "stage_index": stage_index,
+                "detail": detail,
+                "active_window_id": active_window_id or self._current_window_id or "idle",
+                "buffered_events": len(self._window_buffer),
+                "windows_completed": self._windows_completed,
+                "updated_at": now_iso,
+            }
+            tmp_fd, tmp_path_str = tempfile.mkstemp(dir=str(status_file.parent), suffix=".tmp")
+            with os.fdopen(tmp_fd, "w", encoding="utf-8") as fh:
+                json.dump(data, fh)
+            Path(tmp_path_str).replace(status_file)
+        except Exception:
+            pass
+
     def _assign_window(self, event: dict) -> Optional[str]:
         """Return the window label for *event*, or None on parse error."""
         try:
@@ -410,6 +477,11 @@ class WindowOrchestrator:
             return
 
         # --- 1. Write TSV to HDFS ---
+        self._report_status(
+            "HDFS Window Commit", 1,
+            f"Serializing {len(events)} events to HDFS partition {window_id}",
+            status="hdfs_commit", active_window_id=window_id,
+        )
         try:
             hdfs_put_text(tsv_content, hdfs_tsv_path, self.hadoop_container)
         except Exception as exc:
@@ -420,6 +492,11 @@ class WindowOrchestrator:
             return  # Do not attempt MR if write failed
 
         # --- 2. Trigger MapReduce ---
+        self._report_status(
+            "MapReduce Aggregation", 2,
+            f"Executing Hadoop Streaming job on cluster for {window_id}",
+            status="mapreduce", active_window_id=window_id,
+        )
         try:
             run_mapreduce(hdfs_tsv_path, hdfs_mr_output, self.script_path)
         except subprocess.CalledProcessError as exc:
@@ -437,6 +514,11 @@ class WindowOrchestrator:
             return
 
         # --- 3. Process Window into Ranking JSON ---
+        self._report_status(
+            "Velocity Broadcast", 3,
+            f"Computing momentum deltas and updating ranking output",
+            status="ranking", active_window_id=window_id,
+        )
         try:
             from engine.ranking import RankingEngine
             ranking_engine = RankingEngine(
@@ -460,6 +542,11 @@ class WindowOrchestrator:
         logger.info(
             f"Window {window_id} complete. "
             f"Total windows processed: {self._windows_completed}."
+        )
+        self._report_status(
+            "Kafka Streaming", 0,
+            f"Window {window_id} processed. Buffering streaming events...",
+            status="buffering", active_window_id=self._current_window_id,
         )
 
     # ---------------------------------------------------------------------- #
@@ -536,6 +623,12 @@ class WindowOrchestrator:
                             break
 
                     self._window_buffer.append(event)
+                    if len(self._window_buffer) % 200 == 0:
+                        self._report_status(
+                            "Kafka Streaming", 0,
+                            f"Buffering live transactions ({len(self._window_buffer)} events in window)",
+                            status="buffering", active_window_id=self._current_window_id,
+                        )
 
                 if _shutdown or (max_windows is not None and self._windows_completed >= max_windows):
                     break

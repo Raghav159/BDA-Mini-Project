@@ -13,6 +13,9 @@
 
 set -e
 
+# Disable MSYS/MinGW path conversion on Windows so Docker paths like /bda-project aren't mangled
+export MSYS_NO_PATHCONV=1
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${SCRIPT_DIR}"
 LOG_DIR="${PROJECT_ROOT}/logs"
@@ -55,18 +58,25 @@ trap cleanup SIGINT SIGTERM EXIT
 
 # 2. Check and start Docker infrastructure
 echo "[2/6] Starting Docker containers (Kafka + Hadoop)..."
-docker compose -f "${PROJECT_ROOT}/docker-compose.yml" up -d
+(cd "${PROJECT_ROOT}" && docker compose up -d)
 
 echo "Waiting for Kafka and Hadoop DataNode to initialize..."
 for i in {1..30}; do
-    if docker exec bda-hadoop hdfs dfs -ls / >/dev/null 2>&1 && \
-       docker exec bda-kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1; then
+    HADOOP_STATUS=$(docker inspect --format='{{.State.Health.Status}}' bda-hadoop 2>/dev/null || echo "starting")
+    KAFKA_STATUS=$(docker inspect --format='{{.State.Health.Status}}' bda-kafka 2>/dev/null || echo "starting")
+    if [ "$HADOOP_STATUS" = "healthy" ] && [ "$KAFKA_STATUS" = "healthy" ]; then
         echo "Docker infrastructure is ready!"
         break
     fi
-    sleep 1
+    HADOOP_STATE=$(docker inspect --format='{{.State.Status}}' bda-hadoop 2>/dev/null || echo "exited")
+    KAFKA_STATE=$(docker inspect --format='{{.State.Status}}' bda-kafka 2>/dev/null || echo "exited")
+    if [ "$HADOOP_STATE" = "running" ] && [ "$KAFKA_STATE" = "running" ] && [ "$i" -gt 15 ]; then
+        echo "Docker containers running, proceeding..."
+        break
+    fi
+    sleep 2
     if [ "$i" -eq 30 ]; then
-        echo "Error: Docker containers failed to become ready in 30s." >&2
+        echo "Error: Docker containers failed to become ready in 60s." >&2
         exit 1
     fi
 done
@@ -76,24 +86,48 @@ docker exec bda-hadoop hdfs dfsadmin -safemode leave || true
 
 # 3. Initialize HDFS
 echo "[3/6] Setting up HDFS directories and uploading scripts..."
-bash "${PROJECT_ROOT}/scripts/setup_hdfs.sh" > "${LOG_DIR}/hdfs_setup.log" 2>&1
+if ! bash "${PROJECT_ROOT}/scripts/setup_hdfs.sh" > "${LOG_DIR}/hdfs_setup.log" 2>&1; then
+    echo "Error: HDFS setup failed! Logs from ${LOG_DIR}/hdfs_setup.log:" >&2
+    cat "${LOG_DIR}/hdfs_setup.log" >&2
+    exit 1
+fi
+echo "HDFS setup complete."
 
 # 4. Start Pipeline Backend Services
 echo "[4/6] Launching Python pipeline services..."
 
+# Auto-detect Python binary (supports Windows venv, Unix venv, python3, python)
+if [ -f "${PROJECT_ROOT}/venv/Scripts/python.exe" ]; then
+    PYTHON_CMD="${PROJECT_ROOT}/venv/Scripts/python.exe"
+elif [ -f "${PROJECT_ROOT}/.venv/Scripts/python.exe" ]; then
+    PYTHON_CMD="${PROJECT_ROOT}/.venv/Scripts/python.exe"
+elif [ -f "${PROJECT_ROOT}/venv/bin/python" ]; then
+    PYTHON_CMD="${PROJECT_ROOT}/venv/bin/python"
+elif [ -f "${PROJECT_ROOT}/.venv/bin/python" ]; then
+    PYTHON_CMD="${PROJECT_ROOT}/.venv/bin/python"
+elif command -v python3 >/dev/null 2>&1 && python3 --version >/dev/null 2>&1; then
+    PYTHON_CMD="python3"
+elif command -v python >/dev/null 2>&1; then
+    PYTHON_CMD="python"
+else
+    echo "Error: Python executable not found." >&2
+    exit 1
+fi
+echo "  -> Using Python interpreter: ${PYTHON_CMD}"
+
 # Start Kafka Producer
 echo "  -> Starting Kafka Producer..."
-python3 -m producer.producer > "${LOG_DIR}/producer.log" 2>&1 &
+"${PYTHON_CMD}" -m producer.producer > "${LOG_DIR}/producer.log" 2>&1 &
 PIDS+=($!)
 
 # Start Kafka Consumer / Window Orchestrator
 echo "  -> Starting Kafka Consumer & Window Orchestrator..."
-python3 -m consumer.consumer > "${LOG_DIR}/consumer.log" 2>&1 &
+"${PYTHON_CMD}" -m consumer.consumer > "${LOG_DIR}/consumer.log" 2>&1 &
 PIDS+=($!)
 
 # Start FastAPI Server
 echo "  -> Starting FastAPI Backend (http://localhost:8000)..."
-python3 -m uvicorn api.main:app --host 0.0.0.0 --port 8000 > "${LOG_DIR}/api.log" 2>&1 &
+"${PYTHON_CMD}" -m uvicorn api.main:app --host 0.0.0.0 --port 8000 > "${LOG_DIR}/api.log" 2>&1 &
 PIDS+=($!)
 
 # Wait for FastAPI health check
@@ -111,6 +145,10 @@ done
 
 # 5. Start Frontend
 echo "[5/6] Starting React Frontend Dashboard (http://localhost:5173)..."
+if [ ! -d "${PROJECT_ROOT}/frontend/node_modules" ]; then
+    echo "  -> Installing frontend dependencies (npm install)..."
+    (cd "${PROJECT_ROOT}/frontend" && npm install) > "${LOG_DIR}/npm_install.log" 2>&1
+fi
 (cd "${PROJECT_ROOT}/frontend" && npm run dev -- --host 0.0.0.0 --port 5173) > "${LOG_DIR}/frontend.log" 2>&1 &
 PIDS+=($!)
 

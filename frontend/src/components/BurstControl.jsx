@@ -1,333 +1,275 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Zap,
+  Rocket,
+  Sparkles,
+  Flame,
+  CheckCircle2,
+  AlertTriangle,
+} from 'lucide-react';
 import { soundFX } from '../utils/audio';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
+const PRESETS = [
+  { label: 'Light', icon: Zap,      mult: 3,  dur: 30  },
+  { label: 'Rush',  icon: Rocket,   mult: 10, dur: 60  },
+  { label: 'Flash', icon: Sparkles, mult: 25, dur: 120 },
+  { label: 'Hyper', icon: Flame,    mult: 50, dur: 180 },
+];
+
 export default function BurstControl({
+  className = '',
   topProducts = [],
   movers = [],
   selectedProductId = '',
   onBurstTriggered,
 }) {
-  const [productId, setProductId] = useState('');
-  const [multiplier, setMultiplier] = useState(10);
-  const [durationSeconds, setDurationSeconds] = useState(60);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState(null);
-  const [activeBurstState, setActiveBurstState] = useState(null);
+  const [productId,      setProductId]      = useState('');
+  const [multiplier,     setMultiplier]     = useState(10);
+  const [durSecs,        setDurSecs]        = useState(60);
+  const [isSubmitting,   setIsSubmitting]   = useState(false);
+  const [feedback,       setFeedback]       = useState(null);
+  const [activeBurst,    setActiveBurst]    = useState(null);
+  const [prevProp,       setPrevProp]       = useState(selectedProductId);
 
-  const [prevSelectedProp, setPrevSelectedProp] = useState(selectedProductId);
-
-  // Synchronize external selection during render when prop changes
-  if (selectedProductId && selectedProductId !== prevSelectedProp) {
-    setPrevSelectedProp(selectedProductId);
+  // Sync external selection
+  if (selectedProductId && selectedProductId !== prevProp) {
+    setPrevProp(selectedProductId);
     setProductId(String(selectedProductId));
   }
 
-  // Active burst countdown timer
+  // Active burst countdown
   useEffect(() => {
-    if (!activeBurstState) return;
-
-    const timer = setInterval(() => {
-      setActiveBurstState((prev) => {
+    if (!activeBurst) return;
+    const t = setInterval(() => {
+      setActiveBurst(prev => {
         if (!prev) return null;
-        if (prev.remaining <= 1) {
-          return null;
-        }
-        return {
-          ...prev,
-          remaining: prev.remaining - 1,
-        };
+        if (prev.remaining <= 1) return null;
+        return { ...prev, remaining: prev.remaining - 1 };
       });
     }, 1000);
+    return () => clearInterval(t);
+  }, [activeBurst]);
 
-    return () => clearInterval(timer);
-  }, [activeBurstState]);
-
-  // Combined product list without duplicates
-  const productOptions = React.useMemo(() => {
+  const productOptions = useMemo(() => {
     const map = new Map();
-    [...topProducts, ...movers].forEach((p) => {
-      if (p.product_id && !map.has(p.product_id)) {
-        map.set(p.product_id, p);
-      }
+    [...topProducts, ...movers].forEach(p => {
+      if (p.product_id && !map.has(p.product_id)) map.set(p.product_id, p);
     });
     return Array.from(map.values());
   }, [topProducts, movers]);
 
-  const selectedProductObj = productOptions.find((p) => String(p.product_id) === String(productId));
+  const selectedObj = productOptions.find(p => String(p.product_id) === String(productId));
 
-  // Quick preset handlers
   const applyPreset = (mult, dur) => {
     setMultiplier(mult);
-    setDurationSeconds(dur);
+    setDurSecs(dur);
     soundFX.playClick();
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
     setFeedback(null);
+    const pid  = parseInt(productId, 10);
+    const mult = parseInt(multiplier, 10);
+    const dur  = parseInt(durSecs, 10);
 
-    const parsedId = parseInt(productId, 10);
-    const parsedMult = parseInt(multiplier, 10);
-    const parsedDur = parseInt(durationSeconds, 10);
-
-    if (isNaN(parsedId) || parsedId <= 0) {
-      setFeedback({ type: 'error', message: 'Please specify a valid numeric Product ID.' });
-      return;
-    }
-
-    if (isNaN(parsedMult) || parsedMult <= 0) {
-      setFeedback({ type: 'error', message: 'Multiplier must be greater than 0.' });
-      return;
-    }
-
-    if (isNaN(parsedDur) || parsedDur <= 0) {
-      setFeedback({ type: 'error', message: 'Duration must be greater than 0 seconds.' });
-      return;
-    }
+    if (isNaN(pid)  || pid  <= 0) { setFeedback({ type: 'error', msg: 'Enter a valid numeric Product ID.' }); return; }
+    if (isNaN(mult) || mult <= 0) { setFeedback({ type: 'error', msg: 'Multiplier must be > 0.' }); return; }
+    if (isNaN(dur)  || dur  <= 0) { setFeedback({ type: 'error', msg: 'Duration must be > 0 seconds.' }); return; }
 
     setIsSubmitting(true);
     soundFX.playClick();
 
     try {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-      const response = await fetch(`${baseUrl}/api/burst`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          product_id: parsedId,
-          multiplier: parsedMult,
-          duration_seconds: parsedDur,
-        }),
+      const res     = await fetch(`${API_BASE_URL}/api/burst`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ product_id: pid, multiplier: mult, duration_seconds: dur }),
       });
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData.detail || 'Burst API failed');
 
-      const resData = await response.json();
-
-      if (!response.ok) {
-        throw new Error(resData.detail || 'Failed to trigger burst signal in API');
-      }
-
-      // Success
-      soundFX.playBurst();
-
-      const prodName = selectedProductObj?.product_name || `Product #${parsedId}`;
-      setFeedback({
-        type: 'success',
-        message: `Signal deployed! Kafka will inject ${parsedMult}x burst for "${prodName}" for ${parsedDur}s.`,
-      });
-
-      setActiveBurstState({
-        productId: parsedId,
-        productName: prodName,
-        multiplier: parsedMult,
-        totalDuration: parsedDur,
-        remaining: parsedDur,
-      });
-
-      if (onBurstTriggered) {
-        onBurstTriggered(resData);
-      }
+      soundFX.playBurst?.();
+      const name = selectedObj?.product_name || `Product #${pid}`;
+      setFeedback({ type: 'success', msg: `Signal deployed! Injecting ${mult}x burst for "${name}" for ${dur}s.` });
+      setActiveBurst({ productId: pid, productName: name, multiplier: mult, totalDuration: dur, remaining: dur });
+      onBurstTriggered?.(resData);
     } catch (err) {
-      setFeedback({
-        type: 'error',
-        message: `Burst dispatch error: ${err.message}`,
-      });
+      setFeedback({ type: 'error', msg: err.message });
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Slider fill percentage
+  const sliderPct = ((multiplier - 1) / (50 - 1)) * 100;
+
   return (
-    <div className="dashboard-panel burst-panel">
+    <div className={`panel burst-panel ${className}`} style={{ marginTop: '16px' }}>
       {/* Header */}
-      <div className="panel-header">
-        <div className="panel-title">
-          <span className="panel-icon burst-icon">⚡</span>
+      <div className="panel-hdr">
+        <div className="panel-title-group">
+          <div className="panel-icon-wrap panel-icon-wrap-orange">
+            <Zap size={16} />
+          </div>
           <div>
-            <h3>Live Demo Traffic Injection</h3>
-            <p className="panel-subtitle">Simulate real-time sales spike via Kafka producer</p>
+            <div className="panel-heading">Live Traffic Injection</div>
+            <div className="panel-sub">Simulate real-time sales spike via Kafka producer</div>
           </div>
         </div>
-        <span className="badge-live-stream">KAFKA LIVE</span>
+        <div className="panel-badges">
+          <span className="badge badge-kafka">KAFKA LIVE</span>
+        </div>
       </div>
 
-      {/* Active Burst Banner if running */}
-      {activeBurstState && (
-        <div className="active-burst-banner">
-          <div className="active-burst-info">
-            <span className="pulse-burst-dot" />
-            <div>
-              <strong className="active-burst-title">
-                Active Traffic Spike: {activeBurstState.productName}
-              </strong>
-              <div className="active-burst-meta mono">
-                ID: #{activeBurstState.productId} • {activeBurstState.multiplier}x Multiplier • {activeBurstState.remaining}s remaining
+      {/* Active burst banner */}
+      {activeBurst && (
+        <div style={{ padding: '12px 16px 0' }}>
+          <div className="active-burst-banner">
+            <div className="burst-banner-top">
+              <div className="burst-banner-info">
+                <span className="burst-live-dot" />
+                <div>
+                  <div className="burst-banner-title">Active: {activeBurst.productName}</div>
+                  <div className="burst-banner-meta">
+                    ID #{activeBurst.productId} · {activeBurst.multiplier}x · {activeBurst.remaining}s remaining
+                  </div>
+                </div>
               </div>
+              <div className="burst-timer">{activeBurst.remaining}s</div>
             </div>
-          </div>
-          <div className="active-burst-timer mono">
-            {activeBurstState.remaining}s
-          </div>
-          <div className="burst-progress-bar-bg">
-            <div
-              className="burst-progress-bar-fill"
-              style={{
-                width: `${(activeBurstState.remaining / activeBurstState.totalDuration) * 100}%`,
-              }}
-            />
+            <div className="burst-progress-bg">
+              <div
+                className="burst-progress-fill"
+                style={{ width: `${(activeBurst.remaining / activeBurst.totalDuration) * 100}%` }}
+              />
+            </div>
           </div>
         </div>
       )}
 
-      {/* Quick Presets */}
-      <div className="burst-presets-row">
-        <span className="presets-label">Sim Presets:</span>
-        <div className="presets-buttons">
-          <button
-            type="button"
-            className="preset-pill-btn"
-            onClick={() => applyPreset(3, 30)}
-          >
-            ⚡ Light (3x / 30s)
-          </button>
-          <button
-            type="button"
-            className="preset-pill-btn"
-            onClick={() => applyPreset(10, 60)}
-          >
-            🚀 Rush (10x / 60s)
-          </button>
-          <button
-            type="button"
-            className="preset-pill-btn"
-            onClick={() => applyPreset(25, 120)}
-          >
-            💥 Flash (25x / 120s)
-          </button>
-          <button
-            type="button"
-            className="preset-pill-btn"
-            onClick={() => applyPreset(50, 180)}
-          >
-            🌪️ Hyper (50x / 180s)
-          </button>
-        </div>
+      {/* Presets */}
+      <div className="burst-presets">
+        <span className="preset-label">Presets:</span>
+        {PRESETS.map(p => {
+          const PresetIcon = p.icon;
+          return (
+            <button
+              key={p.label}
+              type="button"
+              className="preset-btn"
+              onClick={() => applyPreset(p.mult, p.dur)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+            >
+              <PresetIcon size={12} />
+              <span>{p.label}</span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Main Form */}
-      <form onSubmit={handleSubmit} className="burst-command-form">
-        {/* Product Selector */}
+      {/* Form */}
+      <form className="burst-form" onSubmit={handleSubmit}>
+        {/* Product dropdown */}
         <div className="form-field">
-          <label htmlFor="product-quick-select" className="field-label">
-            Target Product Selection
-          </label>
+          <label className="field-label">Target Product</label>
           <select
-            id="product-quick-select"
-            className="select-field"
+            className="field-select"
             value={productId}
-            onChange={(e) => setProductId(e.target.value)}
+            onChange={e => setProductId(e.target.value)}
             disabled={isSubmitting}
           >
-            <option value="">-- Choose from active products or type ID below --</option>
-            {productOptions.map((p) => (
+            <option value="">— Select from active products —</option>
+            {productOptions.map(p => (
               <option key={p.product_id} value={p.product_id}>
-                #{p.product_id} - {p.product_name} ({p.total_units?.toLocaleString()} units)
+                #{p.product_id} · {p.product_name} ({(p.total_units || 0).toLocaleString()} units)
               </option>
             ))}
           </select>
         </div>
 
-        {/* Manual ID Input */}
+        {/* Manual ID */}
         <div className="form-field">
-          <label htmlFor="manual-product-id" className="field-label">
-            Product ID (Numeric SKU)
-          </label>
+          <label className="field-label">Product ID (Numeric SKU)</label>
           <input
-            id="manual-product-id"
             type="number"
-            className="input-field mono"
-            placeholder="e.g. 24852 (Banana) or 26209 (Limes)"
+            className="field-input mono-input"
+            placeholder="e.g. 24852 (Banana)"
             value={productId}
-            onChange={(e) => setProductId(e.target.value)}
+            onChange={e => setProductId(e.target.value)}
             disabled={isSubmitting}
             required
           />
         </div>
 
-        {/* Multiplier Slider & Value */}
+        {/* Multiplier slider */}
         <div className="form-field">
-          <div className="slider-header-row">
-            <label htmlFor="multiplier-slider" className="field-label">
-              Volume Multiplier
-            </label>
-            <span className="slider-badge mono">{multiplier}x Traffic</span>
+          <div className="slider-header">
+            <label className="field-label">Volume Multiplier</label>
+            <span className="slider-val">{multiplier}× Traffic</span>
           </div>
-          <div className="range-slider-wrap">
-            <input
-              id="multiplier-slider"
-              type="range"
-              min="1"
-              max="50"
-              step="1"
-              className="range-slider"
-              value={multiplier}
-              onChange={(e) => setMultiplier(Number(e.target.value))}
-              disabled={isSubmitting}
-            />
-            <div className="slider-ticks">
-              <span>1x (Base)</span>
-              <span>10x</span>
-              <span>25x</span>
-              <span>50x (Max)</span>
-            </div>
+          <input
+            type="range"
+            min="1" max="50" step="1"
+            className="range-slider"
+            style={{ '--pct': `${sliderPct}%` }}
+            value={multiplier}
+            onChange={e => setMultiplier(Number(e.target.value))}
+            disabled={isSubmitting}
+          />
+          <div className="slider-ticks">
+            <span>1× Base</span>
+            <span>10×</span>
+            <span>25×</span>
+            <span>50× Max</span>
           </div>
         </div>
 
-        {/* Duration Select Pills */}
+        {/* Duration pills */}
         <div className="form-field">
-          <label className="field-label">Burst Duration Window</label>
-          <div className="duration-pills-row">
-            {[30, 60, 120, 180, 300].map((sec) => (
+          <label className="field-label">Burst Duration</label>
+          <div className="dur-pills">
+            {[30, 60, 120, 180, 300].map(s => (
               <button
-                key={sec}
+                key={s}
                 type="button"
-                className={`duration-pill ${durationSeconds === sec ? 'active' : ''}`}
-                onClick={() => setDurationSeconds(sec)}
+                className={`dur-pill ${durSecs === s ? 'active' : ''}`}
+                onClick={() => setDurSecs(s)}
                 disabled={isSubmitting}
               >
-                {sec >= 60 ? `${sec / 60} min` : `${sec}s`}
+                {s >= 60 ? `${s / 60}min` : `${s}s`}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Action Trigger Button */}
+        {/* Deploy */}
         <button
           type="submit"
-          className="deploy-burst-button"
+          className="deploy-btn"
           disabled={isSubmitting || !productId}
+          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
         >
           {isSubmitting ? (
             <>
-              <span className="pulse-spinner-sm" />
-              <span>Transmitting Kafka Signal...</span>
+              <span className="spinner spinner-sm" />
+              <span>Transmitting Kafka Signal…</span>
             </>
           ) : (
             <>
-              <span className="btn-lightning">⚡</span>
+              <Zap size={15} />
               <span>Inject Real-Time Traffic Spike</span>
             </>
           )}
         </button>
 
-        {/* Feedback Message */}
+        {/* Feedback */}
         {feedback && (
-          <div className={`status-banner-box banner-${feedback.type}`}>
-            <span className="banner-icon">
-              {feedback.type === 'success' ? '🚀' : '⚠️'}
-            </span>
-            <span className="banner-text">{feedback.message}</span>
+          <div className={`feedback-banner ${feedback.type === 'success' ? 'feedback-success' : 'feedback-error'}`}>
+            {feedback.type === 'success' ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
+            <span>{feedback.msg}</span>
           </div>
         )}
       </form>

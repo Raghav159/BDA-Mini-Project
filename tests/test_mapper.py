@@ -1,11 +1,12 @@
 import subprocess
+import sys
 import pytest
 
 MAPPER_PATH = "mapreduce/mapper.py"
 
 def run_mapper(input_str: str) -> str:
     proc = subprocess.Popen(
-        ["python3", MAPPER_PATH],
+        [sys.executable, MAPPER_PATH],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,

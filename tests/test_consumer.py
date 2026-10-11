@@ -220,6 +220,7 @@ class TestTsvHelpers:
     def test_events_to_tsv_is_readable_by_mapper(self):
         """Verify mapper.py can process the TSV produced by events_to_tsv."""
         import subprocess as sp
+        import sys
         events = [
             {"product_id": 24852, "product_name": "Banana",
              "units": 1, "event_time": "2026-09-29T10:00:00Z"},
@@ -231,12 +232,12 @@ class TestTsvHelpers:
         tsv = events_to_tsv(events)
         mapper_path = Path(__file__).resolve().parent.parent / "mapreduce" / "mapper.py"
         proc = sp.run(
-            ["python3", str(mapper_path)],
+            [sys.executable, str(mapper_path)],
             input=tsv.encode("utf-8"),
             capture_output=True,
         )
         assert proc.returncode == 0
-        lines = proc.stdout.decode().strip().split("\n")
+        lines = [l.strip() for l in proc.stdout.decode().splitlines() if l.strip()]
         assert "24852\t1" in lines
         assert "13176\t1" in lines
 

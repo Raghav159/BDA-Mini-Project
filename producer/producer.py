@@ -16,6 +16,34 @@ import sys
 import time
 from typing import Any, Dict, Generator, Optional, Tuple
 
+# Python 3.12 Windows compatibility patch for kafka-python selectors
+import selectors
+if hasattr(selectors, "SelectSelector"):
+    _orig_unregister = selectors.SelectSelector.unregister
+    def _safe_unregister(self, fileobj):
+        try:
+            return _orig_unregister(self, fileobj)
+        except Exception:
+            key = None
+            try:
+                fd = fileobj.fileno() if hasattr(fileobj, "fileno") else -1
+            except Exception:
+                fd = -1
+            for reg_fd, reg_key in list(getattr(self, "_map", {}).items()):
+                if reg_key.fileobj == fileobj or (fd != -1 and reg_fd == fd):
+                    key = reg_key
+                    break
+            if key is not None:
+                self._map.pop(key.fd, None)
+                if hasattr(self, "_readers") and self._readers is not None:
+                    self._readers.discard(key.fd)
+                if hasattr(self, "_writers") and self._writers is not None:
+                    self._writers.discard(key.fd)
+                return key
+            return None
+    selectors.SelectSelector.unregister = _safe_unregister
+
+
 from kafka import KafkaProducer
 from kafka.errors import KafkaError
 
@@ -68,6 +96,7 @@ class InstacartProducer:
             logger.info(f"Connecting to Kafka broker at {self.bootstrap_servers}...")
             self.producer = KafkaProducer(
                 bootstrap_servers=self.bootstrap_servers,
+                api_version=(2, 6, 0),
                 key_serializer=lambda k: str(k).encode("utf-8"),
                 value_serializer=lambda v: json.dumps(v).encode("utf-8"),
                 acks=1,
@@ -304,42 +333,47 @@ class InstacartProducer:
         )
 
         try:
-            for chunk in self.read_order_products_chunks():
-                for oid, pid in chunk:
-                    burst_pid, multiplier = self.check_burst_signal()
+            while True:
+                for chunk in self.read_order_products_chunks():
+                    for oid, pid in chunk:
+                        burst_pid, multiplier = self.check_burst_signal()
 
-                    copies = multiplier if (burst_pid is not None and burst_pid == pid) else 1
+                        copies = multiplier if (burst_pid is not None and burst_pid == pid) else 1
 
-                    for _ in range(copies):
-                        event = self.create_event(oid, pid)
+                        for _ in range(copies):
+                            event = self.create_event(oid, pid)
 
-                        if self.dry_run:
-                            if total_produced < 5 or total_produced % 1000 == 0:
-                                logger.info(f"[DRY-RUN] Would produce key={pid}: {json.dumps(event)}")
-                        else:
-                            try:
-                                self.producer.send(
-                                    topic=self.topic,
-                                    key=pid,
-                                    value=event
-                                )
-                            except KafkaError as ke:
-                                logger.error(f"Kafka send error for product {pid}: {ke}")
+                            if self.dry_run:
+                                if total_produced < 5 or total_produced % 1000 == 0:
+                                    logger.info(f"[DRY-RUN] Would produce key={pid}: {json.dumps(event)}")
+                            else:
+                                try:
+                                    self.producer.send(
+                                        topic=self.topic,
+                                        key=pid,
+                                        value=event
+                                    )
+                                except KafkaError as ke:
+                                    logger.error(f"Kafka send error for product {pid}: {ke}")
 
-                        total_produced += 1
+                            total_produced += 1
 
-                        if max_messages and total_produced >= max_messages:
-                            logger.info(f"Reached max_messages limit ({max_messages}). Stopping producer.")
-                            if self.producer and not self.dry_run:
+                            if max_messages and total_produced >= max_messages:
+                                logger.info(f"Reached max_messages limit ({max_messages}). Stopping producer.")
+                                if self.producer and not self.dry_run:
+                                    self.producer.flush()
+                                return total_produced
+
+                            if target_delay > 0:
+                                time.sleep(target_delay)
+
+                            if total_produced % 100 == 0 and not self.dry_run and self.producer:
                                 self.producer.flush()
-                            return total_produced
+                                logger.info(f"Produced {total_produced} messages to topic '{self.topic}'.")
 
-                        if target_delay > 0:
-                            time.sleep(target_delay)
-
-                        if total_produced % 100 == 0 and not self.dry_run and self.producer:
-                            self.producer.flush()
-                            logger.info(f"Produced {total_produced} messages to topic '{self.topic}'.")
+                if max_messages:
+                    break
+                logger.info("Reached end of Instacart dataset; rewinding stream for continuous real-time analytics...")
 
         except KeyboardInterrupt:
             logger.info("Producer execution interrupted by user.")
