@@ -90,7 +90,7 @@ export default function PodiumShowcase({ topItems = [], onSelectForBurst }) {
             />
           </div>
           <div className="energy-bar-label">
-            <span>Volume Share</span>
+            <span>{item.rank === 1 ? 'Volume Benchmark' : 'Share vs #1 Leader'}</span>
             <span className="mono">{volumePct}%</span>
           </div>
         </div>

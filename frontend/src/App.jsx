@@ -2,6 +2,9 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Navbar from './components/Navbar';
 import BatchPipelineRadar from './components/BatchPipelineRadar';
 import TelemetryHudStrip from './components/TelemetryHudStrip';
+import ProcessingDiagnostics from './components/ProcessingDiagnostics';
+import IntradayVelocityChart from './components/IntradayVelocityChart';
+import BurstFeedbackBanner from './components/BurstFeedbackBanner';
 import PodiumShowcase from './components/PodiumShowcase';
 import LeaderboardGrid from './components/LeaderboardGrid';
 import MomentumRadar from './components/MomentumRadar';
@@ -32,6 +35,7 @@ export default function App() {
   const [isAudioEnabled, setIsAudioEnabled] = useState(false);
   const [burstTargetProductId, setBurstTargetProductId] = useState('');
   const [activeBurst, setActiveBurst] = useState(null);
+  const [lastBurstResult, setLastBurstResult] = useState(null);
   const [isArchModalOpen, setIsArchModalOpen] = useState(false);
 
   const previousWindowRef = useRef(null);
@@ -147,6 +151,16 @@ export default function App() {
   // When burst signal deploys, switch back to Momentum tab so the user sees live surge!
   const handleBurstSuccess = (burstObj) => {
     fetchRankings();
+    const matched = (rankingData?.top_10 || []).find(
+      (p) => String(p.product_id) === String(burstObj?.productId)
+    );
+    setLastBurstResult({
+      ...burstObj,
+      windowId: rankingData?.window_id ? rankingData.window_id.replace('window_', '#') : '#active',
+      productName: matched?.product_name || `Product #${burstObj?.productId}`,
+      momentumPct: matched?.momentum_pct,
+      windowUnits: matched?.current_window_units,
+    });
     setTimeout(() => {
       setActiveSideTab('momentum');
     }, 900);
@@ -182,6 +196,13 @@ export default function App() {
 
       {/* Main Mission Control Body */}
       <main className="cockpit-viewport">
+        {/* Real-time Overdrive / Post-burst Feedback Banner */}
+        <BurstFeedbackBanner
+          activeBurst={activeBurst}
+          lastBurstResult={lastBurstResult}
+          onDismissResult={() => setLastBurstResult(null)}
+        />
+
         {/* 2. Real-Time 60s Tumbling Window & MapReduce Batch Radar */}
         <BatchPipelineRadar
           windowId={windowId}
@@ -208,7 +229,16 @@ export default function App() {
           onQuickSelectProduct={handleSelectProductForBurst}
         />
 
-        {/* 4. Top 3 Champions Podium Showcase (only if real products exist) */}
+        {/* 4. Distributed Infrastructure & Big Data Processing Diagnostics */}
+        <ProcessingDiagnostics rankingData={rankingData} />
+
+        {/* 5. Intraday Sales Velocity Radar (Multi-window SVG Trajectory) */}
+        <IntradayVelocityChart
+          rankingData={rankingData}
+          onSelectProductForBurst={handleSelectProductForBurst}
+        />
+
+        {/* 6. Top 3 Champions Podium Showcase (only if real products exist) */}
         {top10.length >= 3 && (
           <PodiumShowcase
             topItems={top10.slice(0, 3)}
@@ -216,7 +246,7 @@ export default function App() {
           />
         )}
 
-        {/* 5. Perfectly Balanced Split Deck: Leaderboard on Left (Output) ↔ Tabbed Side Deck on Right (Output/Input) */}
+        {/* 7. Perfectly Balanced Split Deck: Leaderboard on Left (Output) ↔ Tabbed Side Deck on Right (Output/Input) */}
         <div className="cockpit-split-deck">
           {/* Left Column: Full Cumulative Leaderboard Grid */}
           <div className="deck-main-column">

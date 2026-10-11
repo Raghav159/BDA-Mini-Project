@@ -100,7 +100,7 @@ export default function BurstConsole({
       const name = selectedObj?.product_name || `Product #${pid}`;
       setFeedback({
         type: 'success',
-        msg: `Signal deployed! Transmitting ${mult}× spike traffic on "${name}" for ${dur}s into Kafka broker.`,
+        msg: `Signal accepted (HTTP 200). Transmitting ${mult}× spike traffic on "${name}" for ${dur}s into Kafka broker. Downstream ranking change will aggregate in the next tumbling window.`,
       });
 
       const burstObj = {
@@ -245,12 +245,17 @@ export default function BurstConsole({
         <button
           type="submit"
           className="deploy-overdrive-btn"
-          disabled={isSubmitting || !productId}
+          disabled={isSubmitting || !productId || !!activeBurst}
         >
           {isSubmitting ? (
             <>
               <span className="cyber-spinner-sm" />
               <span>Transmitting Kafka Signal…</span>
+            </>
+          ) : activeBurst ? (
+            <>
+              <Clock size={16} className="text-amber-400" />
+              <span>Overdrive Signal Active ({activeBurst.remaining}s remaining)</span>
             </>
           ) : (
             <>

@@ -59,28 +59,44 @@ export default function BatchPipelineRadar({
     ? -1
     : pipelineStatus?.stage_index !== undefined
     ? pipelineStatus.stage_index
-    : Math.min(3, Math.floor((secondsSinceLastSync / windowSizeSeconds) * 4));
+    : 0; // Default to Stage 0 (Kafka Streaming Buffer), never simulate MapReduce execution
 
-  const isMapReduceRunning = isOnline && (currentStageIndex === 2 || pipelineStatus?.status === 'mapreduce');
+  const isMapReduceRunning = isOnline && (pipelineStatus?.status === 'mapreduce' || pipelineStatus?.stage === 'MapReduce Aggregation');
 
-  // Realistic window progress: reflects real buffer timeline and MapReduce crunching
+  // Window cadence timeline: tracks elapsed time in current 60s tumbling window schedule
   const windowProgressPct = !isOnline
     ? 0
-    : isMapReduceRunning
-    ? 85
-    : currentStageIndex === 1
-    ? 65
-    : currentStageIndex === 3
-    ? 98
-    : Math.min(100, Math.max(5, (secondsSinceLastSync / windowSizeSeconds) * 100));
+    : Math.min(100, Math.max(0, (secondsSinceLastSync / windowSizeSeconds) * 100));
 
   const displayElapsed = Math.min(windowSizeSeconds, secondsSinceLastSync);
 
   const PIPELINE_STAGES = [
-    { name: 'Kafka Streaming', icon: Radio, detail: pipelineStatus?.buffered_events ? `${pipelineStatus.buffered_events} events buffered` : 'Topic buffer :9092' },
-    { name: 'HDFS Window Commit', icon: Database, detail: '/bda-project/windows/' },
-    { name: 'MapReduce Aggregation', icon: Cpu, detail: 'Hadoop streaming jobs' },
-    { name: 'Velocity Broadcast', icon: Zap, detail: 'Atomic state serialization' },
+    {
+      name: 'Kafka Streaming',
+      icon: Radio,
+      detail: pipelineStatus?.buffered_events !== undefined
+        ? `${pipelineStatus.buffered_events} events buffered`
+        : 'Topic: sales-events :9092',
+      status: currentStageIndex === 0 ? 'BUFFERING' : 'COMPLETED',
+    },
+    {
+      name: 'HDFS Window Commit',
+      icon: Database,
+      detail: '/bda-project/windows/',
+      status: currentStageIndex === 1 ? 'COMMITTING' : currentStageIndex > 1 ? 'COMMITTED' : 'WAITING',
+    },
+    {
+      name: 'MapReduce Aggregation',
+      icon: Cpu,
+      detail: isMapReduceRunning ? 'Crunching on YARN' : 'Hadoop Streaming Jar',
+      status: isMapReduceRunning ? 'EXECUTING' : currentStageIndex > 2 ? 'COMPLETED' : 'STANDBY',
+    },
+    {
+      name: 'Velocity Broadcast',
+      icon: Zap,
+      detail: 'Atomic JSON serialization',
+      status: currentStageIndex === 3 ? 'WRITING' : totalWindows > 0 ? 'SYNCED' : 'WAITING',
+    },
   ];
 
   return (
@@ -150,7 +166,7 @@ export default function BatchPipelineRadar({
             <Layers size={13} className={isOnline ? 'text-cyan-400' : 'text-slate-500'} />
             {isOnline ? (
               <span>
-                Tumbling Window Partition: <strong>{displayElapsed}s / {windowSizeSeconds}s</strong>
+                Tumbling Window Cadence Timer: <strong>{displayElapsed}s / {windowSizeSeconds}s</strong>
               </span>
             ) : (
               <span className="text-muted">
@@ -231,6 +247,7 @@ export default function BatchPipelineRadar({
                 <div className="stage-info">
                   <div className="stage-title">{stage.name}</div>
                   <div className="stage-detail">{stage.detail}</div>
+                  <div className="stage-status-badge mono">{stage.status}</div>
                 </div>
               </div>
               {idx < PIPELINE_STAGES.length - 1 && (

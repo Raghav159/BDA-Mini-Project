@@ -410,6 +410,9 @@ class WindowOrchestrator:
         detail: str,
         status: str = "active",
         active_window_id: Optional[str] = None,
+        last_mr_duration: Optional[float] = None,
+        last_window_events: Optional[int] = None,
+        last_window_bytes: Optional[int] = None,
     ) -> None:
         """Atomically persist pipeline telemetry state for the FastAPI serving layer."""
         try:
@@ -426,6 +429,13 @@ class WindowOrchestrator:
                 "windows_completed": self._windows_completed,
                 "updated_at": now_iso,
             }
+            if last_mr_duration is not None:
+                data["last_mr_duration"] = last_mr_duration
+            if last_window_events is not None:
+                data["last_window_events"] = last_window_events
+            if last_window_bytes is not None:
+                data["last_window_bytes"] = last_window_bytes
+
             tmp_fd, tmp_path_str = tempfile.mkstemp(dir=str(status_file.parent), suffix=".tmp")
             with os.fdopen(tmp_fd, "w", encoding="utf-8") as fh:
                 json.dump(data, fh)
@@ -496,7 +506,10 @@ class WindowOrchestrator:
             "MapReduce Aggregation", 2,
             f"Executing Hadoop Streaming job on cluster for {window_id}",
             status="mapreduce", active_window_id=window_id,
+            last_window_events=len(events),
+            last_window_bytes=len(tsv_content.encode()),
         )
+        mr_start_time = time.time()
         try:
             run_mapreduce(hdfs_tsv_path, hdfs_mr_output, self.script_path)
         except subprocess.CalledProcessError as exc:
@@ -512,12 +525,16 @@ class WindowOrchestrator:
                 exc_info=True,
             )
             return
+        mr_duration = round(time.time() - mr_start_time, 1)
 
         # --- 3. Process Window into Ranking JSON ---
         self._report_status(
             "Velocity Broadcast", 3,
-            f"Computing momentum deltas and updating ranking output",
+            f"Computing momentum deltas and updating ranking output (Hadoop MR took {mr_duration}s)",
             status="ranking", active_window_id=window_id,
+            last_mr_duration=mr_duration,
+            last_window_events=len(events),
+            last_window_bytes=len(tsv_content.encode()),
         )
         try:
             from engine.ranking import RankingEngine
@@ -547,6 +564,9 @@ class WindowOrchestrator:
             "Kafka Streaming", 0,
             f"Window {window_id} processed. Buffering streaming events...",
             status="buffering", active_window_id=self._current_window_id,
+            last_mr_duration=mr_duration,
+            last_window_events=len(events),
+            last_window_bytes=len(tsv_content.encode()),
         )
 
     # ---------------------------------------------------------------------- #

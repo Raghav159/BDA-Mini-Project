@@ -2622,3 +2622,579 @@ body {
   font-family: var(--font-mono);
   color: var(--text-muted);
 }
+
+/* ============================================================
+   TELEMETRY PANEL BASE & COMMON
+   ============================================================ */
+.telemetry-panel {
+  background: var(--bg-surface-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: 16px 20px;
+  position: relative;
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.panel-title-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.panel-title-text-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.panel-box-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+.panel-box-sub {
+  font-size: 0.73rem;
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   BURST FEEDBACK BANNER (Priority 4)
+   ============================================================ */
+.burst-feedback-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+  animation: slide-up 0.25s ease;
+}
+
+.active-burst-overdrive-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.16) 0%, rgba(239, 68, 68, 0.14) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.22);
+  border-radius: var(--r-md);
+  padding: 12px 18px;
+  position: relative;
+  overflow: hidden;
+}
+
+.burst-beam-scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #fbbf24, #ef4444, transparent);
+  animation: shimmer 2s linear infinite;
+}
+
+.burst-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.burst-live-icon-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  border-radius: var(--r-full);
+  padding: 4px 10px;
+}
+
+.live-pill-text {
+  font-size: 0.68rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: #fbbf24;
+  letter-spacing: 0.05em;
+}
+
+.burst-spin-subtle {
+  animation: pulse-glow 1.2s ease-in-out infinite;
+}
+
+.burst-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.burst-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.burst-sub-stats {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.burst-sub-stats .sep {
+  opacity: 0.4;
+}
+
+.burst-banner-right {
+  display: flex;
+  align-items: center;
+}
+
+.burst-timer-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--r-sm);
+  padding: 4px 12px;
+}
+
+.timer-clock {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #fbbf24;
+  line-height: 1.1;
+}
+
+.timer-label {
+  font-size: 0.58rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.post-burst-impact-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--r-md);
+  padding: 10px 16px;
+  animation: slide-up 0.2s ease;
+}
+
+.post-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.post-banner-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.post-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.post-sub-stats {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.post-sub-stats .sep {
+  opacity: 0.4;
+}
+
+.post-banner-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 4px;
+  border-radius: var(--r-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.post-banner-close:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ============================================================
+   INTRADAY VELOCITY CHART (Priority 1)
+   ============================================================ */
+.intraday-chart-panel {
+  margin-bottom: 14px;
+}
+
+.chart-legend-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chart-legend-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--r-full);
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.legend-active {
+  color: var(--text-primary);
+}
+
+.legend-muted {
+  color: var(--text-muted);
+  opacity: 0.45;
+}
+
+.legend-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-sku-name {
+  font-weight: 600;
+  max-width: 130px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.legend-sku-rate {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.chart-svg-wrapper {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-faint);
+  border-radius: var(--r-sm);
+  padding: 4px;
+  overflow: visible;
+}
+
+.velocity-svg-chart {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.pulse-node-ring {
+  animation: ripple 2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+  transform-origin: center;
+}
+
+.chart-tooltip-bubble {
+  position: absolute;
+  transform: translate(-50%, -120%);
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-medium);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  border-radius: var(--r-sm);
+  padding: 8px 12px;
+  pointer-events: auto;
+  z-index: 20;
+  min-width: 160px;
+  backdrop-filter: blur(10px);
+  animation: badge-pop 0.15s ease-out;
+}
+
+.tooltip-header {
+  border-bottom: 1px solid var(--border-faint);
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+}
+
+.tooltip-title {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.tooltip-rank {
+  font-size: 0.68rem;
+  color: var(--cyan-400);
+}
+
+.tooltip-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.72rem;
+}
+
+.tooltip-metric-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tooltip-spike-btn {
+  margin-top: 6px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(168, 85, 247, 0.2));
+  border: 1px solid var(--cyan-500);
+  border-radius: var(--r-xs);
+  color: var(--cyan-400);
+  font-size: 0.66rem;
+  font-weight: 600;
+  padding: 3px 0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tooltip-spike-btn:hover {
+  background: var(--cyan-500);
+  color: #050813;
+}
+
+.chart-insight-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-faint);
+}
+
+.chart-rate-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--r-full);
+  padding: 3px 8px;
+  font-size: 0.68rem;
+  color: var(--emerald-400);
+}
+
+/* ============================================================
+   DISTRIBUTED PROCESSING DIAGNOSTICS (Priority 3)
+   ============================================================ */
+.diagnostics-panel {
+  margin-bottom: 14px;
+}
+
+.diagnostics-status-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: var(--r-full);
+  padding: 4px 10px;
+  font-size: 0.68rem;
+  color: var(--purple-400);
+}
+
+.diag-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.diag-online {
+  background-color: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+.diag-offline {
+  background-color: #ef4444;
+}
+
+.diagnostics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 900px) {
+  .diagnostics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.diag-metric-card {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: border-color 0.2s ease;
+}
+
+.diag-metric-card:hover {
+  border-color: var(--border-medium);
+}
+
+.diag-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.diag-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.diag-val {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.diag-unit {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.diag-sub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.diag-badge-sub {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.cluster-nodes-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-faint);
+}
+
+@media (max-width: 900px) {
+  .cluster-nodes-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.cluster-node-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-faint);
+  border-radius: var(--r-xs);
+  padding: 6px 10px;
+}
+
+.node-icon-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.node-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.node-name {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.node-meta {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.node-status-tag {
+  font-size: 0.62rem;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: var(--r-xs);
+  padding: 2px 6px;
+  color: var(--text-secondary);
+}
+
+/* ============================================================
+   VIEWPORT DENSITY & SPLIT DECK OPTIMIZATION (Priority 5)
+   ============================================================ */
+.cockpit-viewport {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 16px 24px;
+}
+
+.cockpit-split-deck {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+@media (max-width: 1100px) {
+  .cockpit-split-deck {
+    grid-template-columns: 1fr;
+  }
+}
+

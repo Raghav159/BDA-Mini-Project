@@ -50,22 +50,21 @@ export default function LeaderboardGrid({
     if (filter === 'podium') res = res.filter((i) => i.rank <= 3);
 
     res.sort((a, b) => {
-      const va =
-        sortField === 'rank'
-          ? (a.rank ?? 999)
-          : sortField === 'units'
-          ? (a.total_units ?? 0)
-          : sortField === 'current'
-          ? (a.current_window_units ?? 0)
-          : (a.momentum_pct ?? 0);
-      const vb =
-        sortField === 'rank'
-          ? (b.rank ?? 999)
-          : sortField === 'units'
-          ? (b.total_units ?? 0)
-          : sortField === 'current'
-          ? (b.current_window_units ?? 0)
-          : (b.momentum_pct ?? 0);
+      let va = 0;
+      let vb = 0;
+      if (sortField === 'rank') {
+        va = Number(a.rank ?? 999);
+        vb = Number(b.rank ?? 999);
+      } else if (sortField === 'units') {
+        va = Number(a.total_units ?? 0);
+        vb = Number(b.total_units ?? 0);
+      } else if (sortField === 'current') {
+        va = Number(a.current_window_units ?? 0);
+        vb = Number(b.current_window_units ?? 0);
+      } else if (sortField === 'momentum') {
+        va = Number(a.momentum_pct ?? 0);
+        vb = Number(b.momentum_pct ?? 0);
+      }
       return sortDir === 'asc' ? va - vb : vb - va;
     });
     return res;
@@ -185,8 +184,8 @@ export default function LeaderboardGrid({
               <SortHeader field="rank" label="Rank" width="70px" />
               <th className="grid-th">Product SKU &amp; Title</th>
               <SortHeader field="units" label="Cumulative Units" width="160px" />
-              <SortHeader field="current" label="60s Velocity" width="140px" />
-              <SortHeader field="momentum" label="Momentum Δ%" width="130px" />
+              <SortHeader field="current" label="Units Sold in Current Window" width="160px" />
+              <SortHeader field="momentum" label="Change from Previous Window" width="160px" />
               <th className="grid-th text-right" style={{ width: '90px' }}>Action</th>
             </tr>
           </thead>
