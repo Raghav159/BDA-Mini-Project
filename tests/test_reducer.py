@@ -1,11 +1,12 @@
 import subprocess
+import sys
 import pytest
 
 REDUCER_PATH = "mapreduce/reducer.py"
 
 def run_reducer(input_str: str) -> str:
     proc = subprocess.Popen(
-        ["python3", REDUCER_PATH],
+        [sys.executable, REDUCER_PATH],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,

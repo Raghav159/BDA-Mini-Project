@@ -1,106 +1,116 @@
 import React from 'react';
+import {
+  Flame,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Zap,
+} from 'lucide-react';
+
+const RANK_COLORS = [
+  'mover-rank-1', 'mover-rank-2', 'mover-rank-3', 'mover-rank-n', 'mover-rank-n',
+];
+
+function MomentumBadge({ pct, direction }) {
+  const dir = direction?.toLowerCase() || (pct > 0 ? 'up' : pct < 0 ? 'down' : 'neutral');
+  const fmt = typeof pct === 'number' ? `${pct > 0 ? '+' : ''}${pct.toFixed(0)}%` : '0%';
+  return (
+    <span className={`mom-pill mom-pill-${dir}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+      {dir === 'up' ? <TrendingUp size={11} /> : dir === 'down' ? <TrendingDown size={11} /> : <Minus size={11} />}
+      <span className="mono">{fmt}</span>
+    </span>
+  );
+}
 
 export default function MomentumMovers({ movers = [], onSelectProductForBurst }) {
-  const renderMomentumBadge = (momentumPct, direction) => {
-    const dir = direction?.toLowerCase() || (momentumPct > 0 ? 'up' : momentumPct < 0 ? 'down' : 'neutral');
-    let arrow = '―';
-    if (dir === 'up') arrow = '▲';
-    if (dir === 'down') arrow = '▼';
-
-    const formattedPct = typeof momentumPct === 'number'
-      ? `${momentumPct > 0 ? '+' : ''}${momentumPct.toFixed(0)}%`
-      : '0%';
-
-    return (
-      <span className={`mover-velocity-pill mover-${dir}`}>
-        <span className="arrow">{arrow}</span>
-        <span className="mono">{formattedPct}</span>
-      </span>
-    );
-  };
-
-  // Find max momentum for normalization
-  const maxMomentum = Math.max(
-    ...movers.map((m) => Math.abs(m.momentum_pct || 0)),
-    100
-  );
+  const maxMom = Math.max(...movers.map(m => Math.abs(m.momentum_pct || 0)), 1);
 
   return (
-    <div className="dashboard-panel movers-panel">
-      <div className="panel-header">
-        <div className="panel-title">
-          <span className="panel-icon flame-icon">🔥</span>
+    <div className="panel">
+      <div className="panel-hdr">
+        <div className="panel-title-group">
+          <div className="panel-icon-wrap panel-icon-wrap-orange">
+            <Flame size={16} />
+          </div>
           <div>
-            <h3>Top 5 Momentum Movers</h3>
-            <p className="panel-subtitle">Fastest Intraday Acceleration in Current Window</p>
+            <div className="panel-heading">Top 5 Momentum Movers</div>
+            <div className="panel-sub">Fastest intraday acceleration · Current window</div>
           </div>
         </div>
-        <span className="pipeline-micro-badge">Intraday Delta</span>
+        <div className="panel-badges">
+          <span className="badge badge-live">Live</span>
+          <span className="badge badge-count">Intraday Δ</span>
+        </div>
       </div>
 
-      {!movers || movers.length === 0 ? (
-        <div className="empty-state-card mini-empty">
-          <span className="empty-icon">📈</span>
-          <p className="empty-state-title">No Intraday Surges Detected</p>
-          <span className="empty-state-sub">Velocity shifts will appear once tumbling windows record spikes.</span>
+      {movers.length === 0 ? (
+        <div className="empty-state">
+          <span className="empty-icon">
+            <TrendingUp size={32} />
+          </span>
+          <div className="empty-title">No surges detected yet</div>
+          <div className="empty-sub">
+            Velocity shifts appear once tumbling windows record intraday spikes.
+          </div>
         </div>
       ) : (
-        <div className="movers-stack">
-          {movers.slice(0, 5).map((item, index) => {
-            const gaugePct = Math.min(100, Math.max(10, ((item.momentum_pct || 0) / maxMomentum) * 100));
-            const delta = (item.current_window_units ?? 0) - (item.previous_window_units ?? 0);
+        <div className="movers-list">
+          {movers.slice(0, 5).map((item, idx) => {
+            const gaugePct = Math.min(100, Math.max(8, (Math.abs(item.momentum_pct || 0) / maxMom) * 100));
+            const delta    = (item.current_window_units ?? 0) - (item.previous_window_units ?? 0);
+            const rankCls  = RANK_COLORS[idx] || 'mover-rank-n';
 
             return (
-              <div key={item.product_id || index} className="mover-card-pro">
-                <div className="mover-top-row">
+              <div key={item.product_id ?? idx} className="mover-card" style={{ animationDelay: `${idx * 0.05}s` }}>
+                {/* Top row: identity + momentum badge */}
+                <div className="mover-top">
                   <div className="mover-identity">
-                    <span className="mover-rank-badge">#{index + 1}</span>
+                    <span className={`mover-rank ${rankCls}`}>#{idx + 1}</span>
                     <div className="mover-name-wrap">
-                      <span className="mover-title" title={item.product_name}>
+                      <div className="mover-name" title={item.product_name}>
                         {item.product_name || `Product #${item.product_id}`}
-                      </span>
-                      <span className="mover-meta mono">
-                        ID: {item.product_id} • Total: {item.total_units?.toLocaleString() ?? 0} units
-                      </span>
+                      </div>
+                      <div className="mover-meta">
+                        ID: {item.product_id} · {(item.total_units || 0).toLocaleString()} units total
+                      </div>
                     </div>
                   </div>
-                  <div className="mover-badge-action">
-                    {renderMomentumBadge(item.momentum_pct, item.momentum_direction)}
-                  </div>
+                  <MomentumBadge pct={item.momentum_pct} direction={item.momentum_direction} />
                 </div>
 
-                {/* Velocity shift indicator */}
-                <div className="mover-metrics-strip">
-                  <div className="mover-stat-bit">
-                    <span className="bit-label">Current Win</span>
-                    <span className="bit-val mono">{item.current_window_units ?? 0}</span>
+                {/* Stats strip */}
+                <div className="mover-stats">
+                  <div className="mover-stat">
+                    <span className="mover-stat-lbl">Curr Win</span>
+                    <span className="mover-stat-val">{item.current_window_units ?? 0}</span>
                   </div>
-                  <div className="mover-stat-divider">➔</div>
-                  <div className="mover-stat-bit">
-                    <span className="bit-label">Prev Win</span>
-                    <span className="bit-val mono">{item.previous_window_units ?? 0}</span>
+                  <span className="mover-stat-sep">→</span>
+                  <div className="mover-stat">
+                    <span className="mover-stat-lbl">Prev Win</span>
+                    <span className="mover-stat-val">{item.previous_window_units ?? 0}</span>
                   </div>
-                  <div className="mover-stat-bit bit-delta">
-                    <span className="bit-label">Window Jump</span>
-                    <span className="bit-val mono delta-up">
-                      +{delta} units
+                  <span className="mover-stat-sep">·</span>
+                  <div className="mover-stat">
+                    <span className="mover-stat-lbl">Jump</span>
+                    <span className={`mover-stat-val ${delta >= 0 ? 'mover-delta-pos' : 'mover-delta-neg'}`}>
+                      {delta >= 0 ? `+${delta}` : delta}
                     </span>
                   </div>
+
                   <button
-                    className="mover-quick-inject-btn"
-                    onClick={() => onSelectProductForBurst && onSelectProductForBurst(item.product_id)}
-                    title={`Inject burst signal for ${item.product_name}`}
+                    className="mover-boost-btn"
+                    onClick={() => onSelectProductForBurst?.(item.product_id)}
+                    title={`Inject burst for ${item.product_name}`}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                   >
-                    ⚡ Boost
+                    <Zap size={11} />
+                    <span>Boost</span>
                   </button>
                 </div>
 
-                {/* Heat surge gauge bar */}
-                <div className="surge-gauge-bg">
-                  <div
-                    className="surge-gauge-fill"
-                    style={{ width: `${gaugePct}%` }}
-                  />
+                {/* Heat gauge */}
+                <div className="heat-bar-bg">
+                  <div className="heat-bar-fill" style={{ width: `${gaugePct}%` }} />
                 </div>
               </div>
             );

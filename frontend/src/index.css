@@ -1,102 +1,239 @@
-:root {
-  /* Surface colors */
-  --bg-deep: #070a13;
-  --bg-base: #0b101d;
-  --bg-panel: rgba(15, 23, 42, 0.75);
-  --bg-panel-hover: rgba(22, 33, 58, 0.85);
-  --bg-input: rgba(11, 16, 29, 0.85);
+/* ============================================================
+   VELOCITY ENGINE — Global Design Tokens & Base Styles
+   Dark Mode (default) + Light Mode
+   ============================================================ */
 
-  /* Border colors */
-  --border-subtle: rgba(255, 255, 255, 0.07);
-  --border-panel: rgba(255, 255, 255, 0.1);
-  --border-glow: rgba(56, 189, 248, 0.25);
-  --border-focus: #38bdf8;
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ---- DARK MODE TOKENS (default) ---- */
+:root {
+  /* Backgrounds */
+  --bg-canvas:          #04070f;
+  --bg-base:            #070d1a;
+  --bg-surface:         #0c1424;
+  --bg-panel:           rgba(10, 17, 35, 0.85);
+  --bg-panel-hover:     rgba(14, 22, 44, 0.95);
+  --bg-elevated:        rgba(18, 28, 52, 0.9);
+  --bg-input:           rgba(8, 14, 30, 0.9);
+  --bg-overlay:         rgba(0, 5, 20, 0.85);
+
+  /* Borders */
+  --border-faint:       rgba(255,255,255,0.04);
+  --border-subtle:      rgba(255,255,255,0.08);
+  --border-panel:       rgba(255,255,255,0.10);
+  --border-active:      rgba(56, 189, 248, 0.40);
+  --border-focus:       #38bdf8;
 
   /* Typography */
-  --font-main: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-ui:   'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
-  /* Text colors */
-  --text-pure: #ffffff;
-  --text-main: #f1f5f9;
-  --text-muted: #94a3b8;
-  --text-dim: #64748b;
+  /* Text */
+  --text-primary:   #f0f4ff;
+  --text-secondary: #8fa8cc;
+  --text-muted:     #4d6080;
+  --text-accent:    #38bdf8;
+  --text-invert:    #07101e;
 
-  /* Brand Accents */
-  --brand-cyan: #38bdf8;
-  --brand-indigo: #6366f1;
-  --brand-violet: #8b5cf6;
-  --brand-purple: #a855f7;
+  /* Brand Palette */
+  --brand-primary:   #38bdf8;
+  --brand-secondary: #6366f1;
+  --brand-tertiary:  #8b5cf6;
+  --brand-orange:    #f97316;
+  --brand-amber:     #f59e0b;
 
-  /* Status Colors */
-  --status-up: #10b981;
-  --status-up-glow: rgba(16, 185, 129, 0.18);
-  --status-down: #f43f5e;
-  --status-down-glow: rgba(244, 63, 94, 0.18);
-  --status-neutral: #94a3b8;
-  --status-neutral-glow: rgba(148, 163, 184, 0.15);
-  --status-warning: #f59e0b;
-  --status-warning-glow: rgba(245, 158, 11, 0.18);
+  /* Neon Glows */
+  --glow-primary:  rgba(56, 189, 248, 0.18);
+  --glow-indigo:   rgba(99, 102, 241, 0.20);
+  --glow-violet:   rgba(139, 92, 246, 0.18);
+  --glow-orange:   rgba(249, 115, 22, 0.20);
 
-  /* Podium Colors */
-  --gold-bg: rgba(234, 179, 8, 0.18);
-  --gold-border: rgba(234, 179, 8, 0.45);
-  --gold-text: #fde047;
-  --silver-bg: rgba(148, 163, 184, 0.18);
-  --silver-border: rgba(148, 163, 184, 0.45);
-  --silver-text: #e2e8f0;
-  --bronze-bg: rgba(217, 119, 6, 0.18);
-  --bronze-border: rgba(217, 119, 6, 0.45);
-  --bronze-text: #fdba74;
+  /* Status */
+  --status-up:      #10b981;
+  --status-up-bg:   rgba(16, 185, 129, 0.12);
+  --status-up-glow: rgba(16, 185, 129, 0.25);
+  --status-down:    #ef4444;
+  --status-down-bg: rgba(239, 68, 68, 0.12);
+  --status-dn-glow: rgba(239, 68, 68, 0.25);
+  --status-warn:    #f59e0b;
+  --status-warn-bg: rgba(245, 158, 11, 0.12);
+  --status-neutral: #64748b;
 
-  /* Radii & Shadows */
-  --radius-lg: 16px;
-  --radius-md: 12px;
-  --radius-sm: 8px;
-  --radius-pill: 9999px;
+  /* Podium */
+  --gold:          #fbbf24;
+  --gold-bg:       rgba(251, 191, 36, 0.12);
+  --gold-border:   rgba(251, 191, 36, 0.35);
+  --silver:        #cbd5e1;
+  --silver-bg:     rgba(203, 213, 225, 0.10);
+  --silver-border: rgba(203, 213, 225, 0.30);
+  --bronze:        #fb923c;
+  --bronze-bg:     rgba(251, 146, 60, 0.12);
+  --bronze-border: rgba(251, 146, 60, 0.35);
 
-  --shadow-panel: 0 10px 30px -5px rgba(0, 0, 0, 0.45), 0 0 1px 1px rgba(255, 255, 255, 0.05);
-  --shadow-glow-cyan: 0 0 25px rgba(56, 189, 248, 0.15);
-  --shadow-glow-indigo: 0 0 25px rgba(99, 102, 241, 0.2);
-  --shadow-glow-red: 0 0 25px rgba(244, 63, 94, 0.3);
+  /* Radii */
+  --r-xs:   6px;
+  --r-sm:   10px;
+  --r-md:   14px;
+  --r-lg:   18px;
+  --r-xl:   24px;
+  --r-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm:     0 2px 8px rgba(0,0,0,0.35);
+  --shadow-md:     0 6px 24px rgba(0,0,0,0.45);
+  --shadow-lg:     0 16px 48px rgba(0,0,0,0.55);
+  --shadow-panel:  0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+  --shadow-glow-c: 0 0 30px rgba(56, 189, 248, 0.20);
+  --shadow-glow-i: 0 0 30px rgba(99, 102, 241, 0.25);
+  --shadow-glow-g: 0 0 30px rgba(16, 185, 129, 0.25);
+
+  /* Transitions */
+  --ease-snappy: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* ---- LIGHT MODE TOKENS ---- */
+[data-theme="light"] {
+  --bg-canvas:          #f0f4fa;
+  --bg-base:            #e8eef8;
+  --bg-surface:         #dde5f5;
+  --bg-panel:           rgba(255, 255, 255, 0.88);
+  --bg-panel-hover:     rgba(255, 255, 255, 0.98);
+  --bg-elevated:        rgba(250, 252, 255, 0.95);
+  --bg-input:           rgba(240, 244, 250, 0.95);
+  --bg-overlay:         rgba(230, 237, 250, 0.90);
+
+  --border-faint:       rgba(0,0,0,0.04);
+  --border-subtle:      rgba(0,0,0,0.08);
+  --border-panel:       rgba(0,0,0,0.12);
+  --border-active:      rgba(14, 116, 196, 0.45);
+  --border-focus:       #0ea5e9;
+
+  --text-primary:   #0f172a;
+  --text-secondary: #375070;
+  --text-muted:     #8099bb;
+  --text-accent:    #0369a1;
+  --text-invert:    #ffffff;
+
+  --brand-primary:   #0284c7;
+  --brand-secondary: #4f46e5;
+  --brand-tertiary:  #7c3aed;
+  --brand-orange:    #ea580c;
+  --brand-amber:     #d97706;
+
+  --glow-primary:  rgba(2, 132, 199, 0.10);
+  --glow-indigo:   rgba(79, 70, 229, 0.10);
+  --glow-violet:   rgba(124, 58, 237, 0.10);
+  --glow-orange:   rgba(234, 88, 12, 0.10);
+
+  --status-up:      #059669;
+  --status-up-bg:   rgba(5, 150, 105, 0.10);
+  --status-up-glow: rgba(5, 150, 105, 0.20);
+  --status-down:    #dc2626;
+  --status-down-bg: rgba(220, 38, 38, 0.10);
+  --status-dn-glow: rgba(220, 38, 38, 0.20);
+  --status-warn:    #d97706;
+  --status-warn-bg: rgba(217, 119, 6, 0.10);
+  --status-neutral: #94a3b8;
+
+  --gold:          #d97706;
+  --gold-bg:       rgba(217, 119, 6, 0.10);
+  --gold-border:   rgba(217, 119, 6, 0.30);
+  --silver:        #64748b;
+  --silver-bg:     rgba(100, 116, 139, 0.08);
+  --silver-border: rgba(100, 116, 139, 0.25);
+  --bronze:        #c2410c;
+  --bronze-bg:     rgba(194, 65, 12, 0.10);
+  --bronze-border: rgba(194, 65, 12, 0.30);
+
+  --shadow-sm:     0 1px 4px rgba(0,0,0,0.10);
+  --shadow-md:     0 4px 16px rgba(0,0,0,0.12);
+  --shadow-lg:     0 10px 32px rgba(0,0,0,0.16);
+  --shadow-panel:  0 4px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.80);
+  --shadow-glow-c: 0 0 20px rgba(2, 132, 199, 0.12);
+  --shadow-glow-i: 0 0 20px rgba(79, 70, 229, 0.15);
+  --shadow-glow-g: 0 0 20px rgba(5, 150, 105, 0.18);
+}
+
+/* ============================================================ */
+/* RESET & BASE                                                  */
+/* ============================================================ */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
+html { scroll-behavior: smooth; }
+
 body {
-  font-family: var(--font-main);
-  background-color: var(--bg-deep);
-  color: var(--text-main);
+  font-family: var(--font-ui);
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
   min-height: 100vh;
-  line-height: 1.5;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-code, .mono {
-  font-family: var(--font-mono);
-}
+code, .mono { font-family: var(--font-mono); font-size: 0.875em; }
+button { font-family: var(--font-ui); cursor: pointer; }
+input, select, textarea { font-family: var(--font-ui); }
 
-/* Custom Sleek Scrollbar */
-::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
-}
+/* ---- Scrollbar ---- */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.10); border-radius: 3px; }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); }
+::-webkit-scrollbar-thumb:hover { background: var(--brand-primary); }
 
-::-webkit-scrollbar-track {
-  background: var(--bg-deep);
+/* ============================================================ */
+/* KEYFRAME ANIMATIONS                                           */
+/* ============================================================ */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.08); }
 }
-
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 4px;
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--brand-cyan);
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ripple {
+  0%   { transform: scale(0.85); opacity: 0.8; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes ticker-flow {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes badge-pop {
+  0%   { transform: scale(0.7); opacity: 0; }
+  60%  { transform: scale(1.08); }
+  100% { transform: scale(1);   opacity: 1; }
+}
+@keyframes burst-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--status-up-glow); }
+  50%       { box-shadow: 0 0 0 10px transparent; }
+}
+@keyframes dot-blink {
+  0%, 80%, 100% { transform: scale(0); opacity: 0; }
+  40%            { transform: scale(1); opacity: 1; }
+}
+@keyframes number-flip {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+@keyframes grid-scan {
+  0%   { opacity: 0; top: 0%; }
+  10%  { opacity: 0.4; }
+  90%  { opacity: 0.4; }
+  100% { opacity: 0; top: 100%; }
 }

@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -e
 
+# Disable MSYS/MinGW path conversion on Windows so Docker paths like /bda-project aren't mangled
+export MSYS_NO_PATHCONV=1
+
 # Run MapReduce on Hadoop Streaming for BDA Mini Project
 
 INPUT_PATH="${1:-/bda-project/synthetic_transactions.tsv}"
@@ -26,9 +29,9 @@ fi
 
 # Locate Streaming JAR reliably inside container/environment
 if command -v hadoop &> /dev/null; then
-    STREAMING_JAR=$(find ${HADOOP_HOME:-/opt/hadoop}/share/hadoop/tools/lib -name "hadoop-streaming-*.jar" 2>/dev/null | head -n 1)
+    STREAMING_JAR=$(find ${HADOOP_HOME:-/opt/hadoop}/share/hadoop/tools/lib -name "hadoop-streaming-*.jar" 2>/dev/null | head -n 1 | tr -d '\r')
 else
-    STREAMING_JAR=$(docker exec ${CONTAINER_NAME} find /opt/hadoop/share/hadoop/tools/lib -name "hadoop-streaming-*.jar" | head -n 1)
+    STREAMING_JAR=$(docker exec ${CONTAINER_NAME} find /opt/hadoop/share/hadoop/tools/lib -name "hadoop-streaming-*.jar" | head -n 1 | tr -d '\r')
 fi
 
 if [ -z "$STREAMING_JAR" ]; then

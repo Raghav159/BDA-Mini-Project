@@ -330,6 +330,7 @@ class RankingEngine:
         self.product_names: Dict[str, str] = {}
         self.last_window_id: str = ""
         self.windows_processed: int = 0
+        self.window_history: List[dict] = []
 
         self._load_state()
 
@@ -375,6 +376,7 @@ class RankingEngine:
         }
         self.last_window_id = state.get("window_id", "")
         self.windows_processed = int(state.get("windows_processed", 0))
+        self.window_history = state.get("window_history", [])
 
         logger.info(
             f"State loaded: {len(self.cumulative_totals)} products, "
@@ -395,6 +397,7 @@ class RankingEngine:
             "window_id": window_id,
             "last_updated": _utc_now(),
             "windows_processed": self.windows_processed,
+            "window_history": self.window_history,
         }
         _atomic_write_json(self.state_file, state)
         logger.debug(f"State saved to {self.state_file}")
@@ -507,14 +510,28 @@ class RankingEngine:
             self.product_names,
         )
 
-        # Step 8: Build and write ranking output
+        # Step 8: Record window history (last 12 windows)
+        total_window_units = sum(self.current_window.values())
+        window_record = {
+            "window_id": window_id,
+            "timestamp": _utc_now(),
+            "total_window_units": total_window_units,
+            "product_units": {str(k): int(v) for k, v in self.current_window.items()},
+        }
+        self.window_history.append(window_record)
+        if len(self.window_history) > 20:
+            self.window_history = self.window_history[-20:]
+
+        # Step 9: Build and write ranking output
         ranking_output = {
             "last_updated": _utc_now(),
             "window_id": window_id,
             "window_size_seconds": self.settings.WINDOW_SIZE,
             "total_windows_processed": self.windows_processed,
+            "total_window_units": total_window_units,
             "top_10": top10,
             "momentum_movers": momentum_movers,
+            "window_history": self.window_history,
         }
 
         _atomic_write_json(self.output_file, ranking_output)

@@ -25,11 +25,20 @@ Instacart Dataset -> Kafka Producer -> Kafka (sales-events) -> Kafka Consumer (W
 
 To launch the complete system end-to-end with a single command:
 
+### In Git Bash or Linux:
 ```bash
 ./run_demo.sh
 ```
 
-*(Or: `bash scripts/start_all.sh`)*
+### In Windows Command Prompt (or Double-Click):
+```cmd
+run_demo.bat
+```
+
+### In Windows PowerShell:
+```powershell
+.\run_demo.ps1
+```
 
 ### Access Endpoints
 

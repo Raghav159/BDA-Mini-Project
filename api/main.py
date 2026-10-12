@@ -103,6 +103,13 @@ def get_rankings() -> Dict[str, Any]:
                 "top_10": [],
                 "momentum_movers": [],
             }
+        status_file = settings.STATE_DIR / "pipeline_status.json"
+        if status_file.exists():
+            try:
+                with open(status_file, "r", encoding="utf-8") as sf:
+                    data["pipeline_status"] = json.load(sf)
+            except Exception:
+                pass
         return data
     except (json.JSONDecodeError, OSError) as e:
         logger.error(f"Error reading ranking output file: {e}")
